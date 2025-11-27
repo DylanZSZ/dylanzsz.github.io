@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dylan Zhang | Ph.D. Student @ UIUC</title>
+    
+    <!-- Google Fonts: Inter for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        uiuc: {
+                            blue: '#13294B',
+                            orange: '#E84A27',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'hover': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8fafc; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Subtle animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hover-card {
+            transition: all 0.3s ease;
+        }
+        .hover-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .section-title {
+            @apply text-2xl font-bold text-slate-900 flex items-center gap-3 mb-8 relative pl-4;
+        }
+        .section-title::before {
+            content: '';
+            @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-uiuc-orange rounded-full;
+        }
+        
+        /* Link styles */
+        .link-highlight {
+            @apply text-slate-900 hover:text-uiuc-orange transition-colors underline decoration-slate-300 decoration-2 underline-offset-2 hover:decoration-uiuc-orange;
+        }
+    </style>
+</head>
+<body class="bg-slate-50/50 text-slate-800 font-sans leading-relaxed selection:bg-uiuc-orange selection:text-white">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-16">
+            
+            <!-- Left Sidebar / Header Profile -->
+            <aside class="lg:col-span-4 xl:col-span-3 space-y-8 fade-in" style="animation-delay: 0.1s;">
+                <div class="lg:sticky lg:top-12 space-y-6">
+                    <!-- Profile Header -->
+                    <div class="bg-white p-8 rounded-3xl shadow-soft border border-slate-100 text-center lg:text-left transition-all hover:shadow-hover">
+                        <!-- Profile Picture -->
+                        <div class="w-40 h-40 mx-auto lg:mx-0 rounded-full p-1 bg-white border-2 border-slate-100 mb-6 shadow-sm relative overflow-hidden group">
+                            <img src="image_0.png" alt="Dylan Zhang" class="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        
+                        <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">Dylan Zhang</h1>
+                        <p class="text-lg text-slate-500 font-medium mb-6 flex items-center justify-center lg:justify-start gap-2">
+                            Ph.D. Student @ UIUC <span class="text-2xl">🌽</span>
+                        </p>
+                        
+                        <div class="space-y-4 text-sm text-slate-600">
+                            <div class="flex items-center justify-center lg:justify-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-uiuc-orange">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <span>Champaign, IL 🌍</span>
+                            </div>
+                            <div class="flex items-center justify-center lg:justify-start gap-3 group">
+                                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-uiuc-orange group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-envelope"></i>
+                                </div>
+                                <a href="mailto:shizhuo2@illinois.edu" class="hover:text-uiuc-blue font-medium hover:underline decoration-uiuc-orange underline-offset-4 transition-all">shizhuo2@illinois.edu</a>
+                            </div>
+                        </div>
+
+                        <!-- Social Buttons -->
+                        <div class="mt-8 flex flex-wrap justify-center lg:justify-start gap-3">
+                            <a href="#" class="flex items-center gap-2 px-5 py-2.5 bg-slate-50 hover:bg-white hover:shadow-md border border-slate-200 rounded-xl text-sm font-medium transition-all duration-200 group">
+                                <i class="fa-solid fa-graduation-cap text-blue-600 group-hover:scale-110 transition-transform"></i> Scholar
+                            </a>
+                            <a href="#" class="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white hover:bg-black hover:shadow-md border border-transparent rounded-xl text-sm font-medium transition-all duration-200 group">
+                                <i class="fa-brands fa-x-twitter group-hover:scale-110 transition-transform"></i> Twitter
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Misc Section -->
+                    <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 transition-all hover:shadow-hover">
+                        <h3 class="uppercase tracking-wider text-xs font-bold text-slate-400 mb-4">Misc. Interests</h3>
+                        <div class="space-y-3">
+                            <p class="text-sm text-slate-600 flex items-center gap-3">
+                                <span class="text-xl">😂</span> Minions & Stand-up Comedy
+                            </p>
+                            <p class="text-sm text-slate-600 flex items-center gap-3">
+                                <span class="text-xl">🏎️</span> Cars & Planes
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Acknowledgement -->
+                    <div class="mt-6 text-xs text-slate-400 text-center lg:text-left italic">
+                        Template borrowed from my amazing lab-mate Deema.
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="lg:col-span-8 xl:col-span-9 space-y-12">
+                
+                <!-- About Me -->
+                <section class="fade-in bg-gradient-to-br from-white to-slate-50 p-8 md:p-10 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden hover-card hover:shadow-hover" style="animation-delay: 0.2s;">
+                    <div class="absolute top-0 right-0 p-6 opacity-[0.07]">
+                        <i class="fa-solid fa-quote-right text-8xl text-uiuc-blue"></i>
+                    </div>
+                    <h2 class="section-title">
+                        About Me
+                    </h2>
+                    <div class="prose prose-slate max-w-none text-slate-600 leading-8 text-lg">
+                        <p class="mb-6">
+                            I am <strong class="text-slate-900">Dylan</strong>, a Ph.D. Student in Computer Science at the <span class="font-semibold text-uiuc-blue">University of Illinois Urbana-Champaign (UIUC)</span> 🌽, advised by <a href="#" class="text-uiuc-blue hover:text-uiuc-orange font-medium underline decoration-dotted underline-offset-4 transition-colors">Prof. Hao Peng</a>. I am a proud member of our lab, officially named <strong>ALTA</strong>.
+                        </p>
+                        <p class="mb-6">
+                            I’m broadly interested in <strong>language model post-training</strong>. My previous work has focused on the data-centric aspects of post-training. Moving forward, I’m eager to explore new directions such as:
+                        </p>
+                        <div class="bg-white/60 rounded-2xl p-6 border border-slate-100/50 my-8">
+                            <ul class="list-none space-y-4">
+                                <li class="flex items-start gap-3">
+                                    <span class="text-xl mt-1">🚀</span>
+                                    <span>Offline-to-online reinforcement learning</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-xl mt-1">💡</span>
+                                    <span>Incentivizing proactive reasoning behaviors for knowledge discovery</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="text-xl mt-1">🤖</span>
+                                    <span>Rapid deployment of foundation model–based agents in novel environments</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <p>
+                            I’m also deeply excited about the growing role of foundation models in scientific discovery—and the rich post-training algorithmic challenges that come with it.
+                        </p>
+                    </div>
+
+                    <!-- Call to Action Banner -->
+                    <div class="mt-10 bg-blue-50/80 border border-blue-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-briefcase text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-blue-900 font-semibold text-lg">Looking for Opportunities</p>
+                            <p class="text-blue-700">I am looking for Research Internship opportunities for Summer 2026.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Education -->
+                <section class="fade-in" style="animation-delay: 0.3s;">
+                    <h2 class="section-title">
+                        Education
+                    </h2>
+                    <div class="bg-white p-8 rounded-3xl shadow-soft border border-slate-100 hover-card hover:shadow-hover transition-all duration-300 group">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center text-3xl shadow-sm border border-orange-100 group-hover:scale-105 transition-transform">
+                                    🎓
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900">Ph.D. in Computer Science</h3>
+                                    <p class="text-slate-600 text-lg">University of Illinois Urbana-Champaign 🌽 🐿️</p>
+                                </div>
+                            </div>
+                            <div class="text-right md:text-right">
+                                <span class="inline-block px-4 py-1.5 bg-slate-50 text-slate-600 rounded-full text-sm font-mono font-medium border border-slate-200">2022 - Present</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pl-20 text-slate-500 flex items-center gap-2">
+                            <i class="fa-solid fa-user-tie text-slate-400"></i>
+                            Advisor: <span class="font-medium text-uiuc-blue">Prof. Hao Peng</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- News -->
+                <section class="fade-in" style="animation-delay: 0.4s;">
+                    <h2 class="section-title">
+                        News
+                    </h2>
+                    <div class="bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden hover-card hover:shadow-hover">
+                        <div class="divide-y divide-slate-100">
+                            <div class="p-6 flex gap-6 items-start group hover:bg-slate-50 transition-colors">
+                                <div class="w-28 flex-shrink-0 text-sm font-mono text-slate-400 mt-1 flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar"></i> Sep 2025
+                                </div>
+                                <div class="text-slate-700 leading-relaxed">
+                                    <!-- LINK UPDATED HERE: GRAPE -->
+                                    <a href="https://dylanzsz.github.io/GRAPE" target="_blank" class="font-bold text-slate-900 hover:text-uiuc-orange transition-colors underline decoration-slate-300 decoration-2 underline-offset-2">GRAPE</a>
+                                    was accepted to <span class="bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full text-xs font-bold ml-2">NeurIPS 2025 Spotlight</span>! 🎉
+                                </div>
+                            </div>
+                            <div class="p-6 flex gap-6 items-start group hover:bg-slate-50 transition-colors">
+                                <div class="w-28 flex-shrink-0 text-sm font-mono text-slate-400 mt-1 flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar"></i> May 2025
+                                </div>
+                                <div class="text-slate-700 leading-relaxed">
+                                    Started my Student Researcher journey with <strong class="text-slate-900 group-hover:text-uiuc-blue transition-colors">Google</strong>. 🚀
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- NEW SECTION: Ongoing Works -->
+                <section class="fade-in" style="animation-delay: 0.45s;">
+                    <h2 class="section-title">
+                        Ongoing Works
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- LIME CARD -->
+                        <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 hover-card hover:shadow-hover group cursor-pointer transition-all" onclick="window.open('https://dylanzsz.github.io/LIME', '_blank')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-xl text-green-600 shadow-sm border border-green-100 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-flask"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-uiuc-orange transition-colors flex items-center gap-2">
+                                        LIME
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-xs opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"></i>
+                                    </h3>
+                                    <p class="text-sm text-slate-500">View project page</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Experience -->
+                <section class="fade-in" style="animation-delay: 0.5s;">
+                    <h2 class="section-title">
+                        Internship Experience
+                    </h2>
+                    <div class="grid gap-6">
+                        <!-- Google -->
+                        <div class="group bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100 hover:border-blue-200 transition-all hover-card hover:shadow-hover">
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-50 shadow-sm flex items-center justify-center text-3xl group-hover:scale-105 transition-transform">
+                                        <i class="fa-brands fa-google text-slate-700"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Student Researcher</h3>
+                                        <p class="text-slate-600 font-medium">Google</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-mono text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">5.2025 - Present</span>
+                            </div>
+                            <p class="text-sm text-slate-500 ml-[5.25rem] flex items-center gap-2">
+                                <i class="fa-solid fa-map-pin text-slate-400"></i> Mountain View, CA
+                            </p>
+                        </div>
+
+                        <!-- Microsoft 2024 -->
+                        <div class="group bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100 hover:border-blue-200 transition-all hover-card hover:shadow-hover">
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-50 shadow-sm flex items-center justify-center text-3xl group-hover:scale-105 transition-transform">
+                                        <i class="fa-brands fa-microsoft text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Research Intern</h3>
+                                        <p class="text-slate-600 font-medium">Microsoft Research</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-mono text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">5.2024 - 8.2024</span>
+                            </div>
+                            <p class="text-sm text-slate-500 ml-[5.25rem] flex items-center gap-2">
+                                <i class="fa-solid fa-map-pin text-slate-400"></i> Redmond, WA
+                            </p>
+                        </div>
+
+                        <!-- Microsoft 2023 -->
+                        <div class="group bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100 hover:border-blue-200 transition-all hover-card hover:shadow-hover">
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-50 shadow-sm flex items-center justify-center text-3xl group-hover:scale-105 transition-transform">
+                                        <i class="fa-brands fa-microsoft text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Research Intern</h3>
+                                        <p class="text-slate-600 font-medium">Microsoft Research</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-mono text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">5.2023 - 8.2023</span>
+                            </div>
+                            <p class="text-sm text-slate-500 ml-[5.25rem] flex items-center gap-2">
+                                <i class="fa-solid fa-map-pin text-slate-400"></i> Redmond, WA
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Publications -->
+                <section class="fade-in" style="animation-delay: 0.6s;">
+                    <h2 class="section-title">
+                        Selected Works
+                    </h2>
+                    
+                    <div class="bg-white p-8 rounded-3xl shadow-soft border border-slate-100 hover-card hover:shadow-hover">
+                        <div class="space-y-12 relative ml-4">
+                            <!-- Timeline Line -->
+                            <div class="absolute left-0 top-4 bottom-4 w-0.5 bg-slate-200 hidden md:block"></div>
+
+                            <!-- 2025 -->
+                            <div class="relative pl-0 md:pl-10 group">
+                                <span class="hidden md:flex absolute -left-[1.1rem] top-1 w-9 h-9 bg-white border-2 border-slate-300 rounded-full items-center justify-center text-xs font-bold text-slate-500 group-hover:border-uiuc-orange group-hover:text-uiuc-orange transition-colors shadow-sm">25</span>
+                                <h3 class="text-lg font-bold text-slate-400 mb-6 group-hover:text-uiuc-orange transition-colors">2025</h3>
+                                
+                                <div class="space-y-8">
+                                    <!-- Paper 1 -->
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">The Best Instruction-Tuning Data are Those That Fit</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Qirun Dai, Hao Peng
+                                        </p>
+                                    </article>
+
+                                    <!-- Paper 2 -->
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">Improving Influence-based Instruction Tuning Data Selection for Balanced Learning of Diverse Capabilities</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Qirun Dai, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Jiaqi W. Ma, Hao Peng
+                                        </p>
+                                    </article>
+
+                                    <!-- Paper 3 -->
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">Entropy-Regularized Process Reward Model</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Hanning Zhang*, Pengcheng Wang*, Shizhe Diao*, Yong Lin, Rui Pan, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Pavlo Molchanov, Tong Zhang
+                                        </p>
+                                    </article>
+                                    
+                                    <!-- Paper 4 -->
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">ScaleBiO: Scalable Bilevel Optimization for LLM Data Reweighting</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang*</span>, Rui Pan*, Hanning Zhang*, Xingyuan Pan*, Minrui Xu, Jipeng Zhang, Renjie Pi, Xiaoyu Wang, Tong Zhang <span class="text-slate-500 italic text-xs ml-1">(*equal contrib)</span>
+                                        </p>
+                                    </article>
+                                </div>
+                            </div>
+
+                            <!-- 2024 -->
+                            <div class="relative pl-0 md:pl-10 group">
+                                <span class="hidden md:flex absolute -left-[1.1rem] top-1 w-9 h-9 bg-white border-2 border-slate-300 rounded-full items-center justify-center text-xs font-bold text-slate-500 group-hover:border-uiuc-orange group-hover:text-uiuc-orange transition-colors shadow-sm">24</span>
+                                <h3 class="text-lg font-bold text-slate-400 mb-6 group-hover:text-uiuc-orange transition-colors">2024</h3>
+                                
+                                <div class="space-y-8">
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">Only-IF: Revealing the Decisive Effect of Instruction Diversity on Generalization</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Justin Wang, Francois Charton
+                                        </p>
+                                    </article>
+
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">SciCode: A Research Coding Benchmark Curated by Scientists</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Minyang Tian*, Luyu Gao*, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Xinan Chen, … (multi-institution collaboration)
+                                        </p>
+                                    </article>
+                                </div>
+                            </div>
+
+                            <!-- 2023 -->
+                            <div class="relative pl-0 md:pl-10 group">
+                                <span class="hidden md:flex absolute -left-[1.1rem] top-1 w-9 h-9 bg-white border-2 border-slate-300 rounded-full items-center justify-center text-xs font-bold text-slate-500 group-hover:border-uiuc-orange group-hover:text-uiuc-orange transition-colors shadow-sm">23</span>
+                                <h3 class="text-lg font-bold text-slate-400 mb-6 group-hover:text-uiuc-orange transition-colors">2023</h3>
+                                <div class="space-y-8">
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">Making Large Language Models Better Reasoners with Step-Aware Verifier</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Yifei Li, Zeqi Lin, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Qiang Fu, Bei Chen, Jian-Guang Lou, Weizhu Chen
+                                        </p>
+                                    </article>
+                                </div>
+                            </div>
+                            
+                             <!-- 2021 -->
+                             <div class="relative pl-0 md:pl-10 group">
+                                <span class="hidden md:flex absolute -left-[1.1rem] top-1 w-9 h-9 bg-white border-2 border-slate-300 rounded-full items-center justify-center text-xs font-bold text-slate-500 group-hover:border-uiuc-orange group-hover:text-uiuc-orange transition-colors shadow-sm">21</span>
+                                <h3 class="text-lg font-bold text-slate-400 mb-6 group-hover:text-uiuc-orange transition-colors">2021</h3>
+                                <div class="space-y-8">
+                                    <article class="group/paper">
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="#" class="hover:underline decoration-2 underline-offset-2">Pre-training Co-evolutionary Protein Representation via a Pairwise Masked Language Model</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Liang He, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, Lijun Wu, Huanhuan Xia, Fusong Ju, He Zhang, Siyuan Liu, …, Tie-Yan Liu
+                                        </p>
+                                    </article>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <footer class="pt-16 text-center text-sm font-medium text-slate-400 pb-8">
+                    Last updated: Sept, 2025
+                </footer>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>
