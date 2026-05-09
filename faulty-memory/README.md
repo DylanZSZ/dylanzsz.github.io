@@ -1,6 +1,6 @@
-# Useful Memories Become Faulty When Continuously Updated by LLMs
+# faulty-memory
 
-Interactive blog for the NeurIPS 2026 paper.
+Interactive write-up on continually-updated LLM agent memory and how it breaks.
 
 ## Local preview
 
