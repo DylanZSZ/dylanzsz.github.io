@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Useful Memories Become Faulty When Continuously Updated by LLMs</title>
+<meta name="description" content="LLM agents that consolidate experience into textual memory often make their memory worse over time. We trace the failure to the consolidation step itself." />
+
+<meta property="og:title" content="Useful Memories Become Faulty When Continuously Updated by LLMs" />
+<meta property="og:description" content="LLM agents that consolidate experience into textual memory often make their memory worse over time. We trace the failure to the consolidation step itself." />
+<meta property="og:type" content="article" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#top">Faulty Memory</a>
+    <ul class="topnav-links">
+      <li><a href="#tldr">TL;DR</a></li>
+      <li><a href="#headline">Headline</a></li>
+      <li><a href="#stream">Streaming&nbsp;decline</a></li>
+      <li><a href="#why">Why it breaks</a></li>
+      <li><a href="#fix">A fix</a></li>
+      <li><a href="#takeaways">Takeaways</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header id="top" class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">NeurIPS&nbsp;2026 · Pre-print</div>
+    <h1 class="hero-title">
+      Useful memories become <span class="accent">faulty</span><br/>
+      when continuously updated by&nbsp;LLMs
+    </h1>
+    <p class="hero-sub">
+      An LLM agent that re-writes its own experience into textual lessons doesn't just stop improving. It can become <em>worse than the same agent with no memory at all</em>&mdash;even on problems it had already solved.
+    </p>
+    <div class="hero-authors">
+      <div class="author">
+        <div class="author-name">Dylan Zhang</div>
+        <div class="author-aff">University of Illinois Urbana-Champaign</div>
+      </div>
+    </div>
+    <div class="hero-links">
+      <a class="pill" href="#paper">Paper (PDF)</a>
+      <a class="pill pill-ghost" href="#bibtex">BibTeX</a>
+    </div>
+  </div>
+  <div class="hero-scroll">scroll ↓</div>
+</header>
+
+<main>
+
+<!-- =============================================================== -->
+<section id="tldr" class="band band-tldr">
+  <div class="container narrow">
+    <div class="tldr-card">
+      <div class="tldr-label">TL;DR</div>
+      <ul class="tldr-list">
+        <li>The popular recipe of <strong>distill experience &rarr; store as text &rarr; rewrite later</strong> is <em>not</em> a reliable engine of self-improvement.</li>
+        <li>After streaming ground-truth solutions through a consolidation loop, GPT-5.4 fails on <strong>54&nbsp;%</strong> of ARC-AGI problems it had previously solved with zero memory.</li>
+        <li>The same trajectories yield different memories under different schedules &mdash; the failure is in the <em>rewrite step</em>, not the data.</li>
+        <li>An <strong>episodic-only</strong> agent (just keep raw rollouts) matches or beats every consolidator we test.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="paradigm" class="band">
+  <div class="container narrow">
+    <h2>The paradigm</h2>
+    <p>
+      A line of recent work gives an LLM agent a notebook. After it solves a problem, the agent <em>distills</em> the trajectory into a textual lesson, drops it in persistent memory, and the next time something similar shows up, retrieves and reuses it
+      <a class="cite" data-tip="Reflexion (Shinn et al. 2023), ExpeL (Zhao et al. 2024), CLIN, AWM, ACE, Dynamic Cheatsheet, ReasoningBank, Voyager, MemGPT, Mem0, A&#x2011;MEM…">[refs]</a>.
+    </p>
+    <p>
+      The pitch is irresistible: continual self-improvement <em>without</em> parameter updates. The agent's "weights" are just text it can read and edit. Memory grows, lessons compound, accuracy goes up.
+    </p>
+    <p>
+      We ran this loop end-to-end on five agent benchmarks (ALFWorld, ScienceWorld, WebShop, AppWorld, Mind2Web) and a controlled stream we built on top of ARC-AGI. The story didn't hold.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="headline" class="band band-dark">
+  <div class="container narrow">
+    <div class="kicker">Headline result</div>
+    <h2>The agent regresses on tasks it had already solved.</h2>
+    <p class="lede">
+      Take 19 ARC-AGI problems that GPT-5.4 solves at <strong>100&nbsp;%</strong> accuracy with no memory. Stream those exact problems through the consolidation loop, with <strong>ground-truth solutions</strong> available at every step.
+    </p>
+
+    <figure class="full">
+      <img src="figures/arc_19type_gpt54.png" alt="ARC-AGI Stream: GPT-5.4 accuracy collapses from 100% to 54% as memory consolidates from ground truth.">
+      <figcaption>
+        <strong>Solving the same problem twice, the second time worse.</strong>
+        Without memory: 100&nbsp;%. After consolidating <em>from the ground-truth solutions of those very problems</em>, GPT-5.4 drops to <strong>54&nbsp;%</strong>. The trajectories are perfect; the rewrite step is what breaks.
+      </figcaption>
+    </figure>
+
+    <p>
+      "Faulty memory" is not a euphemism for "noisy data." The data is clean. The agent saw the right answer. The act of compressing those right answers into a re-usable lesson is what made it forget how to solve them.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="stream" class="band">
+  <div class="container">
+    <div class="kicker">The shape of the decline</div>
+    <h2>Memory utility is non-monotonic in updates.</h2>
+
+    <div class="grid-2">
+      <figure>
+        <img src="figures/science_world_bsz4.png" alt="ScienceWorld: score peaks early then declines below the no-memory baseline.">
+        <figcaption><strong>ScienceWorld.</strong> Score climbs for the first ~20 update steps, then declines through step 100. Eventually it slips <em>below</em> the no-memory baseline.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/awm_webshop_scaling.png" alt="WebShop AWM: 0.64 at 8 examples down to 0.20 at 128.">
+        <figcaption><strong>WebShop (AWM).</strong> 0.64 at 8 examples &rarr; 0.20 at 128. The "no-memory" baseline sits at 0.20. Scaling the memory <em>erases its own benefit</em>.</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      And these aren't bad starting points. We seeded one ALFWorld memory with the strongest model we tested (GPT-5.4) on the cleanest "Static-Group" schedule. Then continued updating it with smaller models on the same trajectory pool. Three different solvers (Qwen3.5-{27B, 9B, 4B}). Same shape:
+    </p>
+
+    <figure class="full">
+      <img src="figures/exp2_drop_heterogeneous_vs_homogeneous.png" alt="ALFWorld utility decay across solvers under continued consolidation.">
+      <figcaption><strong>A strong memory is not a fixed point.</strong> Continued consolidation on the same trajectory pool drags utility down across all three solvers, sometimes catastrophically between consecutive steps.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="schedule" class="band band-tint">
+  <div class="container">
+    <div class="kicker">It's the rewrite, not the data</div>
+    <h2>The same trajectories produce different memories<br/>depending on how you serve them.</h2>
+
+    <p>
+      Hold the trajectory pool fixed. Vary <em>only</em> the consolidation schedule. The output memory changes qualitatively, and so does downstream score.
+    </p>
+
+    <div class="schedule-toggle" role="tablist" aria-label="Memory construction schedules">
+      <button class="schedule-btn is-active" data-schedule="static-group" role="tab" aria-selected="true">
+        <span class="schedule-key">Static-Group</span>
+        <span class="schedule-desc">Group by task family, then abstract once.</span>
+      </button>
+      <button class="schedule-btn" data-schedule="static-all" role="tab" aria-selected="false">
+        <span class="schedule-key">Static-All</span>
+        <span class="schedule-desc">Pool everything together, abstract once.</span>
+      </button>
+      <button class="schedule-btn" data-schedule="stream" role="tab" aria-selected="false">
+        <span class="schedule-key">Stream</span>
+        <span class="schedule-desc">Update incrementally, batch by batch.</span>
+      </button>
+    </div>
+
+    <div class="schedule-panel" id="schedule-panel" data-active="static-group">
+      <p class="schedule-readout" data-for="static-group">
+        <strong>Best of the three.</strong> When the consolidator sees a clean batch of one task family at a time, it actually has a chance to extract the latent structure. This is the cleanest possible offline setting.
+      </p>
+      <p class="schedule-readout" data-for="static-all" hidden>
+        <strong>Confused.</strong> Pooling heterogeneous tasks into one abstraction step invites cross-family confusion: lessons from Pick&Place leak into Pick-Clean-Place.
+      </p>
+      <p class="schedule-readout" data-for="stream" hidden>
+        <strong>Worst.</strong> Early abstractions <em>anchor</em> later rewrites. Small errors in segmentation or emphasis become context for the next consolidation pass. Mistakes compound. This is exactly the regime real continual-learning agents operate in.
+      </p>
+    </div>
+
+    <figure class="full">
+      <img src="figures/whole_batch_vs_stream.png" alt="Static-Group, Static-All, and Stream schedules diverge despite using identical trajectory pools.">
+      <figcaption><strong>Same trajectories, three schedules, three different memories.</strong> Streaming &mdash; the schedule a continually-deployed agent actually has &mdash; is the worst.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <div class="callout-label">Why this matters</div>
+      <p>
+        The trajectory pool is <em>identical</em> across these three runs. Whatever's wrong with the resulting memory cannot be blamed on the data the agent collected. It has to be in the consolidation step itself.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="why" class="band">
+  <div class="container">
+    <div class="kicker">Three failure modes</div>
+    <h2>Why does the rewrite go wrong?</h2>
+    <p>
+      We isolate three mechanisms. Each one turns the consolidation loop from accumulation into lossy rewriting.
+    </p>
+
+    <div class="failure-grid">
+      <article class="failure">
+        <div class="failure-num">01</div>
+        <h3>Misgrouping</h3>
+        <p>
+          Before abstracting, the consolidator decides <em>which episodes belong together</em>. When forced to consolidate every step, it pools episodes that share little underlying structure.
+        </p>
+        <p class="failure-evidence">
+          Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. The forced rewrite overrides it.</em>
+        </p>
+        <figure>
+          <img src="figures/misclassification_bsz8.png" alt="Misclassification count rises sharply under forced consolidation.">
+          <figcaption>Misclassification count under Force: episodes from different families merged into one entry.</figcaption>
+        </figure>
+      </article>
+
+      <article class="failure">
+        <div class="failure-num">02</div>
+        <h3>Interference</h3>
+        <p>
+          Each abstraction pass smooths existing entries. When the chunks are imprecisely bounded, the rewrite <strong>strips the applicability conditions</strong>: a lesson that was true for Pick&amp;Place reads as broadly relevant and misleads Pick-Clean-Place.
+        </p>
+        <p class="failure-evidence">
+          On a 15-task ScienceWorld switch sequence, distilling memories <em>only</em> on the current task ("Fresh") beats jointly consolidating across all prior tasks ("Cumulative") by <strong>+203 points</strong>. An LLM judge labels each entry: Cumulative accumulates over-generalized memories at <strong>~5&times;</strong> Fresh's rate, and outright garbage at <strong>~20&times;</strong>.
+        </p>
+        <figure>
+          <img src="figures/science_world_task_switch.png" alt="Cumulative consolidation falls 203 points behind Fresh on ScienceWorld 15-task sequence.">
+          <figcaption>Fresh vs Cumulative: identical trajectories, different consolidation scope, +203 point gap.</figcaption>
+        </figure>
+      </article>
+
+      <article class="failure">
+        <div class="failure-num">03</div>
+        <h3>Overfit</h3>
+        <p>
+          When the input distribution <em>narrows</em> instead of widening, abstraction overfits to surface regularities of the seen instances rather than the underlying strategy. The memory recognizes exact repetitions and fails on close variants of the same family.
+        </p>
+        <p class="failure-evidence">
+          We feed the agent tasks drawn from a single ARC-AGI strategy family across consolidation cycles. Performance stays stable on exact repeats, then collapses on small variations within the same family. The "lesson" turned into a description of the example.
+        </p>
+        <figure>
+          <img src="figures/exp2_strategy_minibatch.png" alt="Overfit pattern: exact repeats stable, variants collapse.">
+          <figcaption>Narrow streams produce memories that recognize seen cases and fail on neighbors.</figcaption>
+        </figure>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="cogsci" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">An aside, for the cognitive-science minded</div>
+    <h2>This is exactly what dual-system memory was built to prevent.</h2>
+    <p>
+      Complementary Learning Systems theory <a class="cite" data-tip="McClelland, McNaughton & O'Reilly (1995); Squire & Wixted; Schapiro et al.; Tse et al.">[refs]</a> says the brain keeps a fast episodic store and a slow schema-forming store <em>architecturally distinct</em>, with consolidation <em>gated</em> by schema fit rather than triggered on every event. Collapse the two into one mandatory rewrite loop and you get exactly the interference catastrophe the dual system was designed to avoid.
+    </p>
+    <p>
+      Today's agentic-memory designs collapse the two. The same LLM that solves the task also rewrites its own memory of that task at every turn, with no gating. Our findings are what that prediction looks like in practice.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="fix" class="band band-dark">
+  <div class="container">
+    <div class="kicker">A surprisingly strong fix</div>
+    <h2>Don't force abstraction. Just keep the episodes.</h2>
+
+    <p class="lede">
+      ARC-AGI Stream lets us put the agent in charge of its own memory. At each step it can <span class="key">Retain</span>, <span class="key">Delete</span>, or <span class="key">Consolidate</span>. We compare three regimes:
+    </p>
+
+    <div class="regimes">
+      <div class="regime regime-force">
+        <h4>Force</h4>
+        <p>Must consolidate every round. Episodic entries don't persist between rounds. <em>The default in most existing systems.</em></p>
+      </div>
+      <div class="regime regime-auto">
+        <h4>Auto</h4>
+        <p>Agent chooses: retain raw, delete, or consolidate. Both episodic and abstract stores are available at retrieval.</p>
+      </div>
+      <div class="regime regime-epi">
+        <h4>Episodic Only</h4>
+        <p>Retain or delete raw episodes. Abstraction is <em>disabled entirely</em>.</p>
+      </div>
+    </div>
+
+    <figure class="full">
+      <img src="figures/arc_train_curves.png" alt="ARC-AGI training curves: Auto and Episodic Only beat Force across 400 steps.">
+      <figcaption>
+        Across 400 training steps and two backbones, <strong>Auto</strong> &mdash; which keeps episodes by default and uses abstraction sparingly &mdash; outperforms <strong>Force</strong>. Whatever Force gains from compression, it loses more by overwriting evidence.
+      </figcaption>
+    </figure>
+
+    <figure class="full">
+      <img src="figures/arc_management_strategies.png" alt="Episodic Management Only matches Auto; abstract-only collapses to no-memory baseline.">
+      <figcaption>
+        <strong>Where the gain actually lives.</strong> Removing episodic evidence and reading only abstract lessons collapses accuracy back to the no-memory baseline. <em>Episodic Management Only</em> &mdash; raw episodes, no abstraction at all &mdash; matches or exceeds the full Auto mode. The useful information was sitting in raw episodes the whole time.
+      </figcaption>
+    </figure>
+
+    <p>
+      And the agent itself agrees, when given the choice. It saturates the episodic buffer quickly at every budget level and keeps the abstract store sparse:
+    </p>
+
+    <figure class="full half">
+      <img src="figures/buffer_size_auto_bsz8.png" alt="Buffer composition under Auto: episodic dominates, abstract stays sparse.">
+      <figcaption>Auto-mode buffer composition. The agent's own management policy is <em>episodic-first</em> when the architecture permits it.</figcaption>
+    </figure>
+
+    <div class="callout callout-finding">
+      <div class="callout-label">The principle</div>
+      <p>
+        Episodic and schema-forming roles should not be collapsed into a single rewrite loop. Raw episodes are first-class evidence, not material to be compressed away. Abstraction, when it happens, should be <em>opt-in and gated by the agent</em> &mdash; not forced on every trajectory.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="strong-baseline" class="band">
+  <div class="container narrow">
+    <div class="kicker">An uncomfortable baseline</div>
+    <h2>An episodic-only memory is competitive with every consolidator we tested.</h2>
+    <p>
+      On WebShop, ALFWorld, and AppWorld, an "episodic-only" memory &mdash; just append raw trajectory rollouts to context, no cross-trajectory rewriting &mdash; is competitive with ACE, AWM, and Dynamic Cheatsheet. Same trajectories. No distillation step. The solver's in-context learning extracts the relevant signal directly from preserved instances.
+    </p>
+    <p>
+      We're not saying abstraction is useless. We're saying: <strong>a memory method whose value depends on distillation should be tested against the unabstracted rollouts it distills.</strong> Currently, very few are.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="takeaways" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">Takeaways</div>
+    <h2>So &mdash; what should you build?</h2>
+    <ol class="big-ol">
+      <li><strong>Treat raw episodes as first-class evidence.</strong> Don't compress them away by default. Today's solvers can already use them via in-context learning.</li>
+      <li><strong>Make abstraction selective and gated.</strong> Not every trajectory needs to become a "lesson". Most should not.</li>
+      <li><strong>Decouple the episodic and schema-forming roles.</strong> A fast episodic buffer + a slow, gated abstract store dominates a single mandatory rewrite loop.</li>
+      <li><strong>Stress-test against scale.</strong> A memory system that's good at 8 examples and bad at 128 is not a memory system. It's a prompt with a leak.</li>
+      <li><strong>Always include an episodic-only baseline.</strong> If your distilled memory can't beat raw rollouts retrieved as in-context demos, the distillation isn't earning its keep.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="conclusion" class="band band-dark">
+  <div class="container narrow">
+    <h2>Continually rewritten memory is fragile.</h2>
+    <p class="lede">
+      Persistent textual memory promised a path for LLM agents to improve after deployment without weight updates. Our results say: not yet. Continuously updated textual memory should be viewed not as a reliable engine of self-improvement, but as a fragile mechanism that can make <em>more experience lead to worse memory</em>.
+    </p>
+    <p>
+      Long-horizon agents will need both episodic and schematic memory. But until LLMs can decide <em>when</em> and <em>how</em> to consolidate, the safer default is to keep the evidence and abstract sparingly &mdash; or not at all.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="paper" class="band">
+  <div class="container narrow">
+    <h2>Paper, code, citation</h2>
+    <p>
+      <a class="pill" href="#">Paper (PDF)</a>
+      <a class="pill pill-ghost" href="#">arXiv</a>
+      <a class="pill pill-ghost" href="#">Code</a>
+    </p>
+    <pre id="bibtex" class="bibtex">@inproceedings{zhang2026faultymemory,
+  title     = {Useful Memories Become Faulty When Continuously Updated by LLMs},
+  author    = {Zhang, Dylan},
+  booktitle = {NeurIPS},
+  year      = {2026}
+}</pre>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container narrow">
+    <p>
+      &copy; 2026 Dylan Zhang. Built with HTML, CSS, and very little JavaScript.
+    </p>
+  </div>
+</footer>
+
+<div id="tooltip" class="tooltip" hidden></div>
+<script src="main.js"></script>
+</body>
+</html>
