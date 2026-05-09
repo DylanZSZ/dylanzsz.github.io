@@ -26,6 +26,8 @@
       <li><a href="#stream">Streaming&nbsp;decline</a></li>
       <li><a href="#why">Why it breaks</a></li>
       <li><a href="#gallery">Examples</a></li>
+      <li><a href="#zoo">Zoo</a></li>
+      <li><a href="#hallucination">Reframe</a></li>
       <li><a href="#fix">A fix</a></li>
       <li><a href="#takeaways">Takeaways</a></li>
     </ul>
@@ -466,57 +468,62 @@
       </p>
     </article>
 
-    <!-- ============ CASE 3: ScienceWorld three flavors of bad ============ -->
+    <!-- ============ CASE 3: ScienceWorld three flavors of bad (TABBED) ============ -->
     <article class="case">
       <header class="case-head">
         <span class="case-num">Case 3</span>
         <h3 class="case-title">ScienceWorld: three flavors of memory rot</h3>
         <p class="case-sub">
-          An LLM judge labels every entry currently in the memory store as
-          <em>over-generalized</em>, <em>over-specialized</em>, or <em>useless garbage</em>.
+          An LLM judge labels every entry in the store as <em>over-generalized</em>, <em>over-specialized</em>, or <em>useless garbage</em>. Click a tab to see verbatim entries from each.
         </p>
       </header>
 
-      <div class="memory-grid">
-        <div class="memory-card">
-          <div class="memory-card-head">
-            <span class="memory-card-label">Over-generalized</span>
-          </div>
-          <div class="memory-card-body">
-            <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a turtle-stage task.</p>
-            <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a moth-stage task.</p>
-            <p><span class="hl">Using a lighter, fire source, or oven</span> MAY BE NECESSARY to change the state of a food or substance in state-change tasks.</p>
-          </div>
-          <div class="memory-card-foot">
-            "Observing all life stages in order" &mdash; broad enough to apply to almost anything. The first two are paraphrases of each other.
+      <div class="tab-browser" data-tab-group="rot">
+        <div class="tab-strip" role="tablist">
+          <button class="tab-btn is-active" role="tab" data-tab="overgen" aria-selected="true">Over-generalized</button>
+          <button class="tab-btn" role="tab" data-tab="overspec" aria-selected="false">Over-specialized</button>
+          <button class="tab-btn" role="tab" data-tab="garbage" aria-selected="false">Useless garbage</button>
+        </div>
+
+        <div class="tab-panel is-active" data-tab-panel="overgen">
+          <div class="memory-card">
+            <div class="memory-card-body">
+              <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a turtle-stage task.</p>
+              <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a moth-stage task.</p>
+              <p><span class="hl">Using a lighter, fire source, or oven</span> MAY BE NECESSARY to change the state of a food or substance in state-change tasks.</p>
+              <p><span class="hl">Focusing on the target substance</span> SHOULD BE NECESSARY to change its state.</p>
+            </div>
+            <div class="memory-card-foot">
+              The first two entries are paraphrases of each other &mdash; the consolidator wrote the same lesson twice with different task labels glued on. None of these names a property a solver can actually use to pick an action.
+            </div>
           </div>
         </div>
 
-        <div class="memory-card">
-          <div class="memory-card-head">
-            <span class="memory-card-label">Over-specialized</span>
-          </div>
-          <div class="memory-card-body">
-            <p>For conductivity-sorting tasks, picking up and testing <span class="hl">unknown substance B</span> in a circuit SHOULD BE NECESSARY before placing it in the correct box.</p>
-            <p>For <span class="hl">salt water</span> recipes, placing salt and a cup/container in the sink MAY BE NECESSARY before pouring water.</p>
-            <p>For <span class="hl">sodium acetate</span> recipes, moving the required ingredients into a glass cup MAY BE NECESSARY before focusing on the product.</p>
-          </div>
-          <div class="memory-card-foot">
-            Bound to the literal label of one episode. The "lesson" is the example.
+        <div class="tab-panel" data-tab-panel="overspec" hidden>
+          <div class="memory-card">
+            <div class="memory-card-body">
+              <p>For conductivity-sorting tasks, picking up and testing <span class="hl">unknown substance B</span> in a circuit SHOULD BE NECESSARY before placing it in the correct box.</p>
+              <p>For <span class="hl">salt water</span> recipes, placing salt and a cup/container in the sink MAY BE NECESSARY before pouring water.</p>
+              <p>For <span class="hl">sodium acetate</span> recipes, moving the required ingredients into a glass cup MAY BE NECESSARY before focusing on the product.</p>
+              <p><span class="hl">SEED_ACQUISITION_BARRIER:</span> access to viable apple seeds often hinges on physically locating seeds in connected environments (e.g., kitchen) and then transporting them to an appropriate growing area.</p>
+            </div>
+            <div class="memory-card-foot">
+              Bound to the literal label of one episode (<em>substance B</em>, <em>salt water</em>, <em>apple seeds</em>). The lesson is the example. None will fire on a task with a different object name.
+            </div>
           </div>
         </div>
 
-        <div class="memory-card">
-          <div class="memory-card-head">
-            <span class="memory-card-label">Useless garbage</span>
-          </div>
-          <div class="memory-card-body">
-            <p>Assembling an electrical circuit <span class="hl">DOES NOT CONTRIBUTE</span> to completing a smores synthesis task.</p>
-            <p><span class="hl">Mixing the correct ingredients</span> MAY BE NECESSARY to create a target solution or mixture.</p>
-            <p>Applying the <span class="hl">correct cultivation action</span> after planting a seed MAY BE NECESSARY to advance plant growth tasks.</p>
-          </div>
-          <div class="memory-card-foot">
-            True but useless. "Use the correct action" is not actionable.
+        <div class="tab-panel" data-tab-panel="garbage" hidden>
+          <div class="memory-card">
+            <div class="memory-card-body">
+              <p>Assembling an electrical circuit <span class="hl">DOES NOT CONTRIBUTE</span> to completing a smores synthesis task.</p>
+              <p><span class="hl">Mixing the correct ingredients</span> MAY BE NECESSARY to create a target solution or mixture.</p>
+              <p>Applying the <span class="hl">correct cultivation action</span> after planting a seed MAY BE NECESSARY to advance plant growth tasks.</p>
+              <p>Using the <span class="hl">correct container or setup</span> MAY CONTRIBUTE to boiling the target substance.</p>
+            </div>
+            <div class="memory-card-foot">
+              True. Useless. "Use the correct action" is not actionable. "DOES NOT CONTRIBUTE" entries are even worse: they consume retrieval bandwidth to tell the agent what <em>not</em> to do, in a context where the agent wasn't going to do it anyway.
+            </div>
           </div>
         </div>
       </div>
@@ -526,6 +533,267 @@
         <figcaption>Running counts of over-generalized and garbage memories under <strong>Cumulative</strong> consolidation diverge from <strong>Fresh</strong> almost immediately and never recover.</figcaption>
       </figure>
     </article>
+
+    <!-- ============ CASE 4: Catastrophic single-step collapse ============ -->
+    <article class="case">
+      <header class="case-head">
+        <span class="case-num">Case 4</span>
+        <h3 class="case-title">A 50-item memory becomes a 1-item memory in a single consolidation step</h3>
+        <p class="case-sub">
+          ALFWorld · gpt-5-nano consolidator · stage 168 &rarr; 169 · cap 50 items
+        </p>
+      </header>
+
+      <p>
+        At stage 168 the memory holds 50 structured items, ~48k characters, each covering a distinct insight (task taxonomy, state-change shortcuts, look-at-light protocol, multi-object recipes). One consolidation step later, at stage 169, the memory contains <strong>a single item</strong>:
+      </p>
+
+      <div class="memory-card">
+        <div class="memory-card-head">
+          <span class="memory-card-label">Stage 169 memory · 1 item · 1,960 chars · verbatim</span>
+          <span class="memory-card-tag">After one merge step</span>
+        </div>
+        <div class="memory-card-body">
+          <p><span class="hl">Use a single, repeatable loop to handle both single and multi-object tasks across cleaning, cooling, heating, and look-at-in-light.</span> 1) Systematically search common room sources&hellip; 2) Pick each target; if a state change is required (cool X with fridge, heat X with microwave, or clean X with sinkbasin), perform it while holding&hellip; 3) Navigate to the destination&hellip; 4) Place the object&hellip; 5) If two identical objects must go to the same destination&hellip; 6) If an object starts at the destination&hellip; 7) Manage distractors&hellip; 8) After completing a batch&hellip; 9) <span class="hl">Look-at-in-light-specific extension: anchor a central desklamp location, co-locate the target and lamp&hellip;</span> 10) Pitfalls to avoid&hellip;</p>
+        </div>
+        <div class="memory-card-foot">
+          The cooling-vs-heating asymmetry that was a separate item at stage 168 (cooling needs no insertion; heating does) is gone. The two-object shuttle default is gone. The look-at protocol is now a half-sentence sub-clause inside step 9.
+        </div>
+      </div>
+
+      <p>The cost on the next eval, against the same memory's stage-168 snapshot:</p>
+
+      <div class="result-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Rollout</th>
+              <th>No memory</th>
+              <th>Stage 168 (50 items)</th>
+              <th>Stage 169 (1 item)</th>
+              <th>&Delta;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Qwen3.5-4B</td><td>15/48</td><td>35/48</td><td>29/48</td><td class="delta-bad">&minus;6</td></tr>
+            <tr><td>Qwen3.5-9B</td><td>15/48</td><td>36/48</td><td>26/48</td><td class="delta-bad">&minus;10</td></tr>
+            <tr><td>Qwen3.5-27B</td><td>19/48</td><td>37/48</td><td>24/48</td><td class="delta-bad">&minus;13</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="case-foot">
+        <strong>One step. 6 to 13 wins lost.</strong> The drop is biggest at the largest rollout: stronger solvers extracted more from the 50-item structured memory, so they lose more when those distinctions collapse into a single "unified loop."
+      </p>
+    </article>
+
+    <!-- ============ CASE 5: ExpeL top-1 slot drifts through 3 concepts ============ -->
+    <article class="case">
+      <header class="case-head">
+        <span class="case-num">Case 5</span>
+        <h3 class="case-title">99 votes for a tautology: a top-ranked memory that mutated three times</h3>
+        <p class="case-sub">
+          ExpeL on ALFWorld · gpt-5.4 base, gpt-5-nano management · 200 stages
+        </p>
+      </header>
+
+      <p>
+        ExpeL ranks memory items by an integer vote score that increments on <code>EDIT</code>. By stage 200, the top slot has 99 votes &mdash; the highest in the memory by a factor of 2. This sounds like extreme value. But the score keeps incrementing when an <code>EDIT</code> <em>replaces</em> the underlying concept. Tracing the same slot:
+      </p>
+
+      <div class="drift-trail">
+        <div class="drift-step">
+          <div class="drift-stage">Stage&nbsp;0 <span class="drift-vote">28 votes</span></div>
+          <div class="drift-content">
+            For tasks phrased as <span class="hl">"examine/look at X with/by/using Y,"</span> first locate both objects, then prefer the environment's direct task-relevant interaction (e.g., use Y, examine X with Y, or examine X if Y has been activated)&hellip;
+          </div>
+          <div class="drift-tag">Concrete: names the look-at-obj-in-light pattern.</div>
+        </div>
+
+        <div class="drift-arrow">&darr;</div>
+
+        <div class="drift-step">
+          <div class="drift-stage">Stage&nbsp;80 <span class="drift-vote">46 votes</span></div>
+          <div class="drift-content">
+            <span class="hl">Prioritize the simplest action that directly advances the current subgoal</span> with the fewest prerequisites and minimal detours, while also favoring actions that reuse already-opened receptacles or inventory-held items&hellip;
+          </div>
+          <div class="drift-tag">Generic planning heuristic. Task-type cue gone.</div>
+        </div>
+
+        <div class="drift-arrow">&darr;</div>
+
+        <div class="drift-step">
+          <div class="drift-stage">Stage&nbsp;200 <span class="drift-vote">99 votes</span></div>
+          <div class="drift-content">
+            <span class="hl">Prioritize actions that directly advance the current subgoal using the nearest feasible fixture or item;</span> verify prerequisites before acting; minimize travel; interleave subgoals when beneficial; attempt to combine state-change and final placement&hellip; avoid assuming an item's state without explicit verification.
+          </div>
+          <div class="drift-tag">Tautology. Applies to any agent benchmark.</div>
+        </div>
+      </div>
+
+      <p class="case-foot">
+        The 99 votes were earned across <em>three different concepts</em>. At stage 200, only the third concept is in the slot. The popularity score is a measure of slot edit-volume, not content quality. The most "trusted" memory entry in this run is a directive that ships with every planning agent ever written.
+      </p>
+    </article>
+  </div>
+</section>
+
+<!-- ============ MEMORY ZOO: tabbed quick-flip browser ============ -->
+<section id="zoo" class="band band-tint">
+  <div class="container">
+    <div class="kicker">Memory zoo</div>
+    <h2>Click through. Each one is a real entry from a real run.</h2>
+    <p class="lede">
+      No charts here, just artifacts. Each tab loads one verbatim entry along with a one-line note on what's broken about it.
+    </p>
+
+    <div class="tab-browser tab-browser-wide" data-tab-group="zoo">
+      <div class="tab-strip" role="tablist">
+        <button class="tab-btn is-active" role="tab" data-tab="z1" aria-selected="true">Vacuous</button>
+        <button class="tab-btn" role="tab" data-tab="z2" aria-selected="false">Phantom rule</button>
+        <button class="tab-btn" role="tab" data-tab="z3" aria-selected="false">Stripped vocab</button>
+        <button class="tab-btn" role="tab" data-tab="z4" aria-selected="false">Pinned to one episode</button>
+        <button class="tab-btn" role="tab" data-tab="z5" aria-selected="false">Crowding out</button>
+        <button class="tab-btn" role="tab" data-tab="z6" aria-selected="false">Byte duplicate</button>
+      </div>
+
+      <div class="tab-panel is-active" data-tab-panel="z1">
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">GPT-5-mini · ARC-AGI · 200 tasks · entry 1 of memory</span>
+          </div>
+          <div class="zoo-body">
+            <p>"Make a working copy of the input grid (list of row lists) before mutating, perform all modifications on the copy, and return the copy to avoid mutating the original input."</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> A defensive Python idiom. Mentions no color, shape, or rule that the six task families distinguish themselves by. The model wrote a coding tip and called it a strategy.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="z2" hidden>
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">GPT-5.4 · ARC-AGI · 200-task run · 1 of 5 entries</span>
+          </div>
+          <div class="zoo-body">
+            <p><strong>When to use:</strong> A same-size output contains <span class="hl">glyph-like objects made of horizontal and vertical strokes</span>, and only one side stroke or partial row/column segment is shifted within the object's own bounding box to <span class="hl">normalize the glyph</span>&hellip;</p>
+            <p><strong>Strategy:</strong> &hellip; (3) identify <span class="hl">anchor strokes that remain fixed</span>&hellip; (5) infer from training which subset of rows or columns should move&hellip; (6) <span class="hl">clear the original glyph and redraw it</span> using the unchanged anchor spans plus the shifted partial spans.</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> Neither "glyph-like" nor "stroke-shift rule" matches any of the six families in the run. The lineage traces to a recurring fragment in failed solver code (<code>out[r][min(cols)] = 0</code>): the consolidator read this typo as evidence of an intentional rule, and the font-rendering metaphor is the abstraction it produced. <em>The strategy was distilled from bugs.</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="z3" hidden>
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">GPT-5-mini · "recolor the largest object" · same lineage, 50 rewrites</span>
+          </div>
+          <div class="zoo-body">
+            <p><span class="zoo-round">Round 1:</span> &hellip;identify and extract structured elements&hellip; compute a global metric (<span class="hl">e.g., max size</span>) &rarr; iterate elements and selectively apply targeted edits.</p>
+            <p><span class="zoo-round">Round 50:</span> Find the <span class="hl">maximum value of a derived per-object numeric attribute</span> and apply a uniform transformation to every object whose attribute equals that maximum.</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> The only concrete property the task selects on &mdash; "max size" &mdash; survives round 1 as a parenthetical example. After 49 self-rewrites, it's gone. The entry now describes a meta-procedure for "any numeric attribute," which means it can no longer tell the solver <em>what</em> to compute.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="z4" hidden>
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">ACE on ALFWorld · curator ADD operation · verbatim</span>
+          </div>
+          <div class="zoo-body">
+            <p>For <code>pick_cool_then_place_in_recep</code> tasks involving a <span class="hl">mug</span>, prioritize exposed-surface search for the exact <span class="hl">mug</span> first, then perform one supported cooling action with the <span class="hl">fridge</span>, immediately confirm the same mug is still in inventory, and go straight to the <span class="hl">already-open cabinet</span> for final placement.</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> The rule fires only on (mug <em>and</em> fridge <em>and</em> already-open cabinet). Each conjunct narrows the matching set further. ALFWorld's actual destinations for this task type include countertop, fridge, sidetable, shelf, and others. The rule applies to a single trajectory's worth of episodes and contributes nothing on the rest.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="z5" hidden>
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">ALFWorld · 200-stage erosion run · stage 200 of 200</span>
+          </div>
+          <div class="zoo-body">
+            <p>(stage 200, item 8) <span class="hl">Always illuminate targets with the desklamp during planning and fetching</span>; relocate targets onto a lamp-hosting surface or move the lamp to the target surface and switch it on&hellip;</p>
+            <p>(stage 200, item 9) <span class="hl">Always illuminate targets with the desklamp during planning and fetching</span>; relocate targets onto a lamp-hosting surface or move the lamp&hellip;</p>
+            <p>(stage 200, item 10) Pattern: <span class="hl">Always illuminate targets with the desklamp during planning and fetching</span>; relocate targets&hellip;</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> 21 of the 38 stage-200 items open with this same directive. The desklamp protocol applies to look-at-in-light tasks &mdash; <strong>8 of 48 eval episodes</strong>. The memory devotes 55% of its prompt-context slots to a directive that fires on 17% of the eval. The cooling-vs-heating asymmetry that lived at stage 20 has been evicted to make room for these paraphrases.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="z6" hidden>
+        <div class="zoo-card">
+          <div class="zoo-meta">
+            <span class="zoo-tag">ALFWorld · stage 200 · items 3 and 5</span>
+          </div>
+          <div class="zoo-body">
+            <p>(item 3) Pattern: For a single target inside a container, open the container to access the object, pick it into the inventory, move directly to the destination surface, and place the object there&hellip;</p>
+            <p>(item 5) Pattern: For a single target inside a container, open the container to access the object, pick it into the inventory, move directly to the destination surface, and place the object there&hellip;</p>
+          </div>
+          <div class="zoo-note">
+            <strong>What's wrong.</strong> Items 3 and 5 are <em>character-for-character identical</em>, occupying two of the 50-slot cap with the same content. The pipeline applies no post-hoc deduplication. The consolidator emitted the same string twice within one stage and the storage layer kept both copies.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEEPER PROBLEM: stronger argument ============ -->
+<section id="hallucination" class="band band-dark">
+  <div class="container narrow">
+    <div class="kicker">The deeper problem</div>
+    <h2>Every consolidation step is a generation. The agent is hallucinating its own past.</h2>
+
+    <p class="lede">
+      The failure is not "the LLM is bad at summarizing." It's structural. We're building a system whose stable long-term knowledge is the fixed point of a generative loop &mdash; and there is no fixed point.
+    </p>
+
+    <p>
+      Each consolidation pass works like this:
+    </p>
+
+    <ol class="big-ol big-ol-dark">
+      <li><strong>Read</strong> the current memory and a fresh trajectory.</li>
+      <li><strong>Generate</strong> what the new memory entry "should" be. This is an LLM forward pass. It produces fluent, plausibly-structured text. It is not a faithful summary of the input &mdash; it is a sample from a distribution conditioned on the input.</li>
+      <li><strong>Write</strong> the sample back as if it were ground truth. The next consolidation step reads this sample and conditions on it.</li>
+    </ol>
+
+    <p>
+      Now stack 200 of these. Step <em>k+1</em>'s context is a sample drawn conditioned on step <em>k</em>'s sample, which was drawn conditioned on step <em>k&minus;1</em>'s, and so on. Plausible-looking text accumulates. Specific facts (which color, which receptacle, which selector) are most likely to drop out at each step because they're the most surprising tokens conditional on the running summary. <strong>The memory drifts toward the LLM's prior over what a good lesson looks like, not toward the truth of the trajectories.</strong>
+    </p>
+
+    <div class="callout callout-finding">
+      <div class="callout-label">The reframe</div>
+      <p>
+        Continuously updated textual memory is an iterated generative loop with no anchor. The "memory" is not a record. It is a sample &mdash; fluent, confident, and increasingly disconnected from what actually happened. We saw vacuous abstractions, phantom rules distilled from bugs, byte-identical duplicates, 99-vote tautologies, 50 items collapsing into one. These are not bugs. They are <em>what samples from the consolidator's prior look like</em> after enough iterations.
+      </p>
+    </div>
+
+    <h3 class="sub-h">Why the experiments line up.</h3>
+    <p>
+      Three specific results we showed earlier follow directly from this framing:
+    </p>
+    <ul class="reframe-list">
+      <li><strong>Stream &lt; Static-All &lt; Static-Group.</strong> The more times the sample is fed back as context, the more the entry drifts toward the prior. Static-Group resamples once per family; Stream resamples thousands of times.</li>
+      <li><strong>Cumulative &lt; Fresh by 203 points.</strong> Cumulative consolidates over a growing prefix of past summaries; Fresh consolidates from raw trajectories of one task. Cumulative sits deeper in the loop.</li>
+      <li><strong>Episodic-only matches abstraction.</strong> Raw episodes are <em>outside</em> the loop. They are not samples. They are records. Of course they hold up better.</li>
+    </ul>
+
+    <h3 class="sub-h">The implication is uncomfortable.</h3>
+    <p>
+      The dominant agentic-memory paradigm &mdash; "after each task, distill the trajectory into a textual lesson and store it" &mdash; is not a way of accumulating experience. It is a way of replacing experience with a slowly-drifting LLM prior over what experience looks like. Until the consolidator is grounded in something it cannot itself overwrite, scaling the experience scales the drift.
+    </p>
   </div>
 </section>
 

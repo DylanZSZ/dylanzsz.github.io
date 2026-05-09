@@ -23,6 +23,27 @@
     b.addEventListener('click', () => activate(b.dataset.schedule));
   });
 
+  // -------- tab browsers --------
+  document.querySelectorAll('.tab-browser').forEach(group => {
+    const btns   = group.querySelectorAll('.tab-btn');
+    const panels = group.querySelectorAll('.tab-panel');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        btns.forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(p => {
+          const on = p.dataset.tabPanel === target;
+          p.classList.toggle('is-active', on);
+          p.hidden = !on;
+        });
+      });
+    });
+  });
+
   // -------- citation tooltips --------
   const tip = document.getElementById('tooltip');
   const cites = document.querySelectorAll('.cite');
