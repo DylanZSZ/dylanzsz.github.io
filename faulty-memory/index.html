@@ -25,6 +25,7 @@
       <li><a href="#headline">Headline</a></li>
       <li><a href="#stream">Streaming&nbsp;decline</a></li>
       <li><a href="#why">Why it breaks</a></li>
+      <li><a href="#gallery">Examples</a></li>
       <li><a href="#fix">A fix</a></li>
       <li><a href="#takeaways">Takeaways</a></li>
     </ul>
@@ -210,6 +211,20 @@
             <p class="failure-evidence">
               Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. The forced rewrite overrides it.</em>
             </p>
+
+            <div class="memory-card">
+              <div class="memory-card-head">
+                <span class="memory-card-label">Verbatim memory entry</span>
+                <span class="memory-card-tag">GPT-5.4 · forced consolidation · ARC-AGI Stream</span>
+              </div>
+              <div class="memory-card-body">
+                <p><strong>When to use:</strong> A large hollow rectangular frame encloses some objects while other objects lie outside it &hellip; <span class="hl">In the kept interior objects, a single distinguished cell is changed based on a relation to a matching object outside the frame, often when an outside object has the same shape as an inside object.</span></p>
+                <p><strong>Strategy:</strong> &hellip; (5) For each interior object, <span class="hl">look for an exterior object with the same shape signature</span>&hellip; (6) <span class="hl">If an interior object has such a matching exterior counterpart, mark the center cell of the interior object's bounding box with the exterior object's color.</span></p>
+              </div>
+              <div class="memory-card-foot">
+                The highlighted spans are <em>foreign-family injections</em>: a shape-signature lookup belongs to the <em>group-by-shape</em> family, the marker color-write belongs to <em>key-marker</em>. Neither is part of the inside-frame source task. The consolidator stitched together a composite no actual family prescribes.
+              </div>
+            </div>
           </div>
           <figure class="failure-figure">
             <img src="figures/misclassification_bsz8.png" alt="Misclassification count rises sharply under forced consolidation.">
@@ -231,6 +246,21 @@
             <p class="failure-evidence">
               On a 15-task ScienceWorld switch sequence, distilling memories <em>only</em> on the current task ("Fresh") beats jointly consolidating across all prior tasks ("Cumulative") by <strong>+203 points</strong>. An LLM judge labels each entry: Cumulative accumulates over-generalized memories at <strong>~5&times;</strong> Fresh's rate, and outright garbage at <strong>~20&times;</strong>.
             </p>
+
+            <div class="memory-card">
+              <div class="memory-card-head">
+                <span class="memory-card-label">Verbatim memory entry</span>
+                <span class="memory-card-tag">ScienceWorld · over-generalized</span>
+              </div>
+              <div class="memory-card-body">
+                <p>
+                  <span class="hl">Using a lighter, fire source, or oven MAY BE NECESSARY</span> to <span class="hl">change the state</span> of a food or substance in <span class="hl">state-change tasks</span>.
+                </p>
+              </div>
+              <div class="memory-card-foot">
+                Reads as broadly applicable. But many state-change tasks need cooling, freezing, or melting. The applicability conditions have been stripped: the lesson now biases the agent toward heat sources for tasks where heat is irrelevant or harmful.
+              </div>
+            </div>
           </div>
           <figure class="failure-figure">
             <img src="figures/science_world_task_switch.png" alt="Cumulative consolidation falls 203 points behind Fresh on ScienceWorld 15-task sequence.">
@@ -252,9 +282,25 @@
             <p class="failure-evidence">
               We feed the agent tasks drawn from a single ARC-AGI strategy family across consolidation cycles. Performance stays stable on exact repeats, then collapses on small variations within the same family. The "lesson" turned into a description of the example.
             </p>
+
+            <div class="memory-card">
+              <div class="memory-card-head">
+                <span class="memory-card-label">Same lineage, 50 rewrites apart</span>
+                <span class="memory-card-tag">GPT-5-mini · "recolor the largest object"</span>
+              </div>
+              <div class="memory-card-body">
+                <p class="memory-round"><span class="memory-round-label">Round 1</span></p>
+                <p>identify and extract structured elements from input &rarr; compute a global metric (<span class="hl">e.g., max size</span>) &rarr; iterate elements and selectively apply targeted edits</p>
+                <p class="memory-round"><span class="memory-round-label">Round 50</span></p>
+                <p>Find the <span class="hl">maximum value of a derived per-object numeric attribute</span> and apply a uniform transformation to every object whose attribute equals that maximum.</p>
+              </div>
+              <div class="memory-card-foot">
+                Round 1 names the actual selector, "max size" &mdash; a property a solver can compute. Round 50, after 49 rewrites of the same lineage on the same task, has erased it: the entry no longer records <em>which</em> attribute to maximize.
+              </div>
+            </div>
           </div>
           <figure class="failure-figure">
-            <img src="figures/exp2_strategy_minibatch.png" alt="Overfit pattern: exact repeats stable, variants collapse.">
+            <img src="figures/arc_overfit.png" alt="ARC overfit: accuracy on exact repeats stays stable while accuracy on close variants collapses.">
             <figcaption>Narrow streams produce memories that recognize seen cases and fail on neighbors.</figcaption>
           </figure>
         </div>
@@ -274,6 +320,213 @@
     <p>
       Today's agentic-memory designs collapse the two. The same LLM that solves the task also rewrites its own memory of that task at every turn, with no gating. Our findings are what that prediction looks like in practice.
     </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="gallery" class="band">
+  <div class="container">
+    <div class="kicker">Examples</div>
+    <h2>Faulty memory in the wild.</h2>
+    <p class="lede">
+      Three real artifacts from real consolidation runs. Verbatim, no edits, just selective highlighting.
+    </p>
+
+    <!-- ============ CASE 1: 10/10 → 0/10 ARC code collapse ============ -->
+    <article class="case">
+      <header class="case-head">
+        <span class="case-num">Case 1</span>
+        <h3 class="case-title">19 ARC tasks collapsed into a single playbook</h3>
+        <p class="case-sub">
+          GPT-5.4 · 19 tasks spanning 6 families · 10 passes (190 steps) · ground-truth code at every step
+        </p>
+      </header>
+
+      <p>
+        After ten passes, the entire memory store contained <em>one</em> entry. Not a library. Not even five entries. One.
+      </p>
+
+      <div class="memory-card">
+        <div class="memory-card-head">
+          <span class="memory-card-label">The only entry left in memory</span>
+          <span class="memory-card-tag">After 190 consolidation steps</span>
+        </div>
+        <div class="memory-card-body">
+          <p>Extract connected objects, choose the largest as a frame, classify other objects by whether their bounding boxes lie strictly inside that frame, erase the frame and all outside objects, then hollow out each inside object in place by turning its interior to color&nbsp;0 while preserving its boundary.</p>
+        </div>
+        <div class="memory-card-foot">
+          Internally consistent. Reads like a sensible lesson. The problem: the source pool spans <em>six</em> families, and this entry describes <em>one</em>. Five families are now invisible to the agent.
+        </div>
+      </div>
+
+      <p>
+        Now hand the agent a held-out task whose true rule is "erase every object of color 6." Unrelated to inside-frame logic. Without memory, the same model solves it 10/10:
+      </p>
+
+      <div class="code-pair">
+        <div class="code-block code-good">
+          <div class="code-head">
+            <span class="code-tag">Without memory</span>
+            <span class="code-score score-good">10 / 10</span>
+          </div>
+<pre><code>def solve(grid):
+    # The transformation removes every connected
+    # component of color 6.
+    out = [row[:] for row in grid]
+    for obj in extract_objects(grid):
+        if obj["color"] == 6:
+            for r, c in obj["cells"]:
+                out[r][c] = 0
+    return out</code></pre>
+        </div>
+        <div class="code-block code-bad">
+          <div class="code-head">
+            <span class="code-tag">With memory</span>
+            <span class="code-score score-bad">0 / 10</span>
+          </div>
+<pre><code>def solve(grid):
+    # Keep only non-frame objects; frames are the
+    # largest connected components.
+    h = len(grid); w = len(grid[0]) if h else 0
+    objs = extract_objects(grid)
+    if not objs:
+        return [row[:] for row in grid]
+
+    frame = max(objs, key=lambda o: o["size"])
+    fb = frame["bbox"]
+
+    out = [[0] * w for _ in range(h)]
+    for obj in objs:
+        if obj is frame: continue
+        bb = obj["bbox"]
+        inside = (bb["top"]  &gt; fb["top"]
+              and bb["bottom"] &lt; fb["bottom"]
+              and bb["left"] &gt; fb["left"]
+              and bb["right"] &lt; fb["right"])
+        if inside:
+            for r, c in obj["cells"]:
+                out[r][c] = obj["color"]
+
+    for obj in extract_objects(out):
+        apply_hollow(out, obj, fill_color=0)
+    return out</code></pre>
+        </div>
+      </div>
+
+      <p class="case-foot">
+        The first comment of the with-memory solver reproduces the entry verbatim. The code follows the entry's frame-and-hollow recipe: pick a frame by size, copy interior objects, hollow them. On this input, no marker passes the strict-inside check and the canvas stays empty. <strong>The memory turned a 10/10 solver into a 0/10 solver.</strong>
+      </p>
+    </article>
+
+    <!-- ============ CASE 2: AWM WebShop accretion ============ -->
+    <article class="case">
+      <header class="case-head">
+        <span class="case-num">Case 2</span>
+        <h3 class="case-title">Collapse by accretion: 8 workflows become 16 redundant ones</h3>
+        <p class="case-sub">
+          AWM on WebShop · 128 expert trajectories · gpt-5.4-mini · 3 epochs
+        </p>
+      </header>
+
+      <p>
+        After epoch 1 the memory file held 8 abstract workflow templates. By epoch 3 it held 16. The new 8 (<span class="hl-bad">highlighted</span>) are not new patterns. They're the same templates, restated with one product category pinned in:
+      </p>
+
+      <div class="memory-card">
+        <div class="memory-card-head">
+          <span class="memory-card-label">AWM workflow titles, epoch 3</span>
+          <span class="memory-card-tag">~8.2k chars · verbatim</span>
+        </div>
+        <div class="memory-card-body workflow-list">
+          <ol class="wf-list">
+            <li><span class="wf-id">W1.</span> Search by attribute-rich query.</li>
+            <li><span class="wf-id">W2.</span> Open candidate item to inspect options.</li>
+            <li><span class="wf-id">W3.</span> Select required attributes before buying.</li>
+            <li><span class="wf-id">W4.</span> Select required size, color, and other variant options before buying.</li>
+            <li><span class="wf-id">W5.</span> Search and select clothing variants with fit type.</li>
+            <li><span class="wf-id">W6.</span> Search and select home decor variants.</li>
+            <li><span class="wf-id">W7.</span> Search and select multi-part apparel sizing variants.</li>
+            <li><span class="wf-id">W8.</span> Search across pages when the first results do not match.</li>
+            <li class="wf-bad"><span class="wf-id">W9.</span> Select apparel color, size, and fit/order-specific variants before buying.</li>
+            <li class="wf-bad"><span class="wf-id">W10.</span> Select non-apparel flavor and size variants before buying.</li>
+            <li class="wf-bad"><span class="wf-id">W11.</span> Select pack-count and color variants before buying.</li>
+            <li class="wf-bad"><span class="wf-id">W12.</span> Search and select color, size, and shape variants for home goods.</li>
+            <li class="wf-bad"><span class="wf-id">W13.</span> Search and select shoes with color and size.</li>
+            <li class="wf-bad"><span class="wf-id">W14.</span> Search and select apparel color, size, and purchase.</li>
+            <li class="wf-bad"><span class="wf-id">W15.</span> Search and select electronics memory/storage variants.</li>
+            <li class="wf-bad"><span class="wf-id">W16.</span> Search and select activewear or performance tops variants.</li>
+          </ol>
+        </div>
+        <div class="memory-card-foot">
+          W9 is just W3 + W4 + W5 stitched together. W10&ndash;W16 are the same search-then-variant-select template (W1&ndash;W4) with one product category pinned in (food, pack-count, home goods, shoes, apparel, electronics, activewear). No new control flow, no new guard, no new stop criterion. <em>Eight new entries that compete for retrieval bandwidth without adding any generality.</em>
+        </div>
+      </div>
+
+      <p class="case-foot">
+        And it's not benign. Removing just <strong>one</strong> workflow (W8, "Search across pages when the first results do not match") raises wins from 7/50 to 14/50 on gpt-5.4-mini and from 18/50 to 23/50 on gpt-5-mini &mdash; because W8 biases the agent toward dead-loop <code>click[Next&nbsp;&gt;]</code> sequences at the expense of <code>click[Buy&nbsp;Now]</code>.
+      </p>
+    </article>
+
+    <!-- ============ CASE 3: ScienceWorld three flavors of bad ============ -->
+    <article class="case">
+      <header class="case-head">
+        <span class="case-num">Case 3</span>
+        <h3 class="case-title">ScienceWorld: three flavors of memory rot</h3>
+        <p class="case-sub">
+          An LLM judge labels every entry currently in the memory store as
+          <em>over-generalized</em>, <em>over-specialized</em>, or <em>useless garbage</em>.
+        </p>
+      </header>
+
+      <div class="memory-grid">
+        <div class="memory-card">
+          <div class="memory-card-head">
+            <span class="memory-card-label">Over-generalized</span>
+          </div>
+          <div class="memory-card-body">
+            <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a turtle-stage task.</p>
+            <p><span class="hl">Observing all life stages in order</span> MAY BE NECESSARY to complete a moth-stage task.</p>
+            <p><span class="hl">Using a lighter, fire source, or oven</span> MAY BE NECESSARY to change the state of a food or substance in state-change tasks.</p>
+          </div>
+          <div class="memory-card-foot">
+            "Observing all life stages in order" &mdash; broad enough to apply to almost anything. The first two are paraphrases of each other.
+          </div>
+        </div>
+
+        <div class="memory-card">
+          <div class="memory-card-head">
+            <span class="memory-card-label">Over-specialized</span>
+          </div>
+          <div class="memory-card-body">
+            <p>For conductivity-sorting tasks, picking up and testing <span class="hl">unknown substance B</span> in a circuit SHOULD BE NECESSARY before placing it in the correct box.</p>
+            <p>For <span class="hl">salt water</span> recipes, placing salt and a cup/container in the sink MAY BE NECESSARY before pouring water.</p>
+            <p>For <span class="hl">sodium acetate</span> recipes, moving the required ingredients into a glass cup MAY BE NECESSARY before focusing on the product.</p>
+          </div>
+          <div class="memory-card-foot">
+            Bound to the literal label of one episode. The "lesson" is the example.
+          </div>
+        </div>
+
+        <div class="memory-card">
+          <div class="memory-card-head">
+            <span class="memory-card-label">Useless garbage</span>
+          </div>
+          <div class="memory-card-body">
+            <p>Assembling an electrical circuit <span class="hl">DOES NOT CONTRIBUTE</span> to completing a smores synthesis task.</p>
+            <p><span class="hl">Mixing the correct ingredients</span> MAY BE NECESSARY to create a target solution or mixture.</p>
+            <p>Applying the <span class="hl">correct cultivation action</span> after planting a seed MAY BE NECESSARY to advance plant growth tasks.</p>
+          </div>
+          <div class="memory-card-foot">
+            True but useless. "Use the correct action" is not actionable.
+          </div>
+        </div>
+      </div>
+
+      <figure class="full">
+        <img src="figures/judge_cumcount_gpt54mini.png" alt="LLM-judge running totals: Cumulative accumulates over-generalized and garbage memories far faster than Fresh.">
+        <figcaption>Running counts of over-generalized and garbage memories under <strong>Cumulative</strong> consolidation diverge from <strong>Fresh</strong> almost immediately and never recover.</figcaption>
+      </figure>
+    </article>
   </div>
 </section>
 
