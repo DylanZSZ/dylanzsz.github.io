@@ -72,7 +72,7 @@
         <li>The popular recipe of <strong>distill experience &rarr; store as text &rarr; rewrite later</strong> is <em>not</em> a reliable engine of self-improvement.</li>
         <li>After streaming ground-truth solutions through a consolidation loop, GPT-5.4 fails on <strong>54&nbsp;%</strong> of ARC-AGI problems it had previously solved with zero memory.</li>
         <li>The same trajectories yield different memories under different schedules &mdash; the failure is in the <em>rewrite step</em>, not the data.</li>
-        <li>An <strong>episodic-only</strong> agent (just keep raw rollouts) matches or beats every consolidator we test.</li>
+        <li>An <strong>episodic-only</strong> agent &mdash; one that <em>selectively</em> retains and deletes raw rollouts, with abstraction disabled &mdash; matches or beats every consolidator we tested. The point is curated raw evidence, not an unfiltered firehose.</li>
       </ul>
     </div>
   </div>
@@ -840,7 +840,7 @@
     <figure class="full">
       <img src="figures/arc_management_strategies.png" alt="Episodic Management Only matches Auto; abstract-only collapses to no-memory baseline.">
       <figcaption>
-        <strong>Where the gain actually lives.</strong> Removing episodic evidence and reading only abstract lessons collapses accuracy back to the no-memory baseline. <em>Episodic Management Only</em> &mdash; raw episodes, no abstraction at all &mdash; matches or exceeds the full Auto mode. The useful information was sitting in raw episodes the whole time.
+        <strong>Where the gain actually lives.</strong> Removing episodic evidence and reading only abstract lessons collapses accuracy back to the no-memory baseline. <em>Episodic Management Only</em> &mdash; raw episodes that the agent has <em>selectively</em> retained or deleted, with abstraction disabled &mdash; matches or exceeds the full Auto mode. The useful information was sitting in the curated raw episodes the whole time.
       </figcaption>
     </figure>
 
