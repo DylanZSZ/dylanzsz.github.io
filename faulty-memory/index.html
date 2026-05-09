@@ -47,10 +47,6 @@
         <div class="author-aff">University of Illinois Urbana-Champaign</div>
       </div>
     </div>
-    <div class="hero-links">
-      <a class="pill" href="#paper">Paper (PDF)</a>
-      <a class="pill pill-ghost" href="#bibtex">BibTeX</a>
-    </div>
   </div>
   <div class="hero-scroll">scroll ↓</div>
 </header>
@@ -200,50 +196,68 @@
       We isolate three mechanisms. Each one turns the consolidation loop from accumulation into lossy rewriting.
     </p>
 
-    <div class="failure-grid">
+    <div class="failure-list">
       <article class="failure">
-        <div class="failure-num">01</div>
-        <h3>Misgrouping</h3>
-        <p>
-          Before abstracting, the consolidator decides <em>which episodes belong together</em>. When forced to consolidate every step, it pools episodes that share little underlying structure.
-        </p>
-        <p class="failure-evidence">
-          Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. The forced rewrite overrides it.</em>
-        </p>
-        <figure>
-          <img src="figures/misclassification_bsz8.png" alt="Misclassification count rises sharply under forced consolidation.">
-          <figcaption>Misclassification count under Force: episodes from different families merged into one entry.</figcaption>
-        </figure>
+        <header class="failure-head">
+          <span class="failure-num">01</span>
+          <h3 class="failure-title">Misgrouping</h3>
+        </header>
+        <div class="failure-body">
+          <div class="failure-text">
+            <p>
+              Before abstracting, the consolidator decides <em>which episodes belong together</em>. When forced to consolidate every step, it pools episodes that share little underlying structure.
+            </p>
+            <p class="failure-evidence">
+              Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. The forced rewrite overrides it.</em>
+            </p>
+          </div>
+          <figure class="failure-figure">
+            <img src="figures/misclassification_bsz8.png" alt="Misclassification count rises sharply under forced consolidation.">
+            <figcaption>Misclassification count under Force: episodes from different families merged into one entry.</figcaption>
+          </figure>
+        </div>
       </article>
 
       <article class="failure">
-        <div class="failure-num">02</div>
-        <h3>Interference</h3>
-        <p>
-          Each abstraction pass smooths existing entries. When the chunks are imprecisely bounded, the rewrite <strong>strips the applicability conditions</strong>: a lesson that was true for Pick&amp;Place reads as broadly relevant and misleads Pick-Clean-Place.
-        </p>
-        <p class="failure-evidence">
-          On a 15-task ScienceWorld switch sequence, distilling memories <em>only</em> on the current task ("Fresh") beats jointly consolidating across all prior tasks ("Cumulative") by <strong>+203 points</strong>. An LLM judge labels each entry: Cumulative accumulates over-generalized memories at <strong>~5&times;</strong> Fresh's rate, and outright garbage at <strong>~20&times;</strong>.
-        </p>
-        <figure>
-          <img src="figures/science_world_task_switch.png" alt="Cumulative consolidation falls 203 points behind Fresh on ScienceWorld 15-task sequence.">
-          <figcaption>Fresh vs Cumulative: identical trajectories, different consolidation scope, +203 point gap.</figcaption>
-        </figure>
+        <header class="failure-head">
+          <span class="failure-num">02</span>
+          <h3 class="failure-title">Interference</h3>
+        </header>
+        <div class="failure-body">
+          <div class="failure-text">
+            <p>
+              Each abstraction pass smooths existing entries. When the chunks are imprecisely bounded, the rewrite <strong>strips the applicability conditions</strong>: a lesson that was true for Pick&amp;Place reads as broadly relevant and misleads Pick-Clean-Place.
+            </p>
+            <p class="failure-evidence">
+              On a 15-task ScienceWorld switch sequence, distilling memories <em>only</em> on the current task ("Fresh") beats jointly consolidating across all prior tasks ("Cumulative") by <strong>+203 points</strong>. An LLM judge labels each entry: Cumulative accumulates over-generalized memories at <strong>~5&times;</strong> Fresh's rate, and outright garbage at <strong>~20&times;</strong>.
+            </p>
+          </div>
+          <figure class="failure-figure">
+            <img src="figures/science_world_task_switch.png" alt="Cumulative consolidation falls 203 points behind Fresh on ScienceWorld 15-task sequence.">
+            <figcaption>Fresh vs Cumulative: identical trajectories, different consolidation scope, +203 point gap.</figcaption>
+          </figure>
+        </div>
       </article>
 
       <article class="failure">
-        <div class="failure-num">03</div>
-        <h3>Overfit</h3>
-        <p>
-          When the input distribution <em>narrows</em> instead of widening, abstraction overfits to surface regularities of the seen instances rather than the underlying strategy. The memory recognizes exact repetitions and fails on close variants of the same family.
-        </p>
-        <p class="failure-evidence">
-          We feed the agent tasks drawn from a single ARC-AGI strategy family across consolidation cycles. Performance stays stable on exact repeats, then collapses on small variations within the same family. The "lesson" turned into a description of the example.
-        </p>
-        <figure>
-          <img src="figures/exp2_strategy_minibatch.png" alt="Overfit pattern: exact repeats stable, variants collapse.">
-          <figcaption>Narrow streams produce memories that recognize seen cases and fail on neighbors.</figcaption>
-        </figure>
+        <header class="failure-head">
+          <span class="failure-num">03</span>
+          <h3 class="failure-title">Overfit</h3>
+        </header>
+        <div class="failure-body">
+          <div class="failure-text">
+            <p>
+              When the input distribution <em>narrows</em> instead of widening, abstraction overfits to surface regularities of the seen instances rather than the underlying strategy. The memory recognizes exact repetitions and fails on close variants of the same family.
+            </p>
+            <p class="failure-evidence">
+              We feed the agent tasks drawn from a single ARC-AGI strategy family across consolidation cycles. Performance stays stable on exact repeats, then collapses on small variations within the same family. The "lesson" turned into a description of the example.
+            </p>
+          </div>
+          <figure class="failure-figure">
+            <img src="figures/exp2_strategy_minibatch.png" alt="Overfit pattern: exact repeats stable, variants collapse.">
+            <figcaption>Narrow streams produce memories that recognize seen cases and fail on neighbors.</figcaption>
+          </figure>
+        </div>
       </article>
     </div>
   </div>
@@ -359,24 +373,6 @@
     <p>
       Long-horizon agents will need both episodic and schematic memory. But until LLMs can decide <em>when</em> and <em>how</em> to consolidate, the safer default is to keep the evidence and abstract sparingly &mdash; or not at all.
     </p>
-  </div>
-</section>
-
-<!-- =============================================================== -->
-<section id="paper" class="band">
-  <div class="container narrow">
-    <h2>Paper, code, citation</h2>
-    <p>
-      <a class="pill" href="#">Paper (PDF)</a>
-      <a class="pill pill-ghost" href="#">arXiv</a>
-      <a class="pill pill-ghost" href="#">Code</a>
-    </p>
-    <pre id="bibtex" class="bibtex">@inproceedings{zhang2026faultymemory,
-  title     = {Useful Memories Become Faulty When Continuously Updated by LLMs},
-  author    = {Zhang, Dylan},
-  booktitle = {NeurIPS},
-  year      = {2026}
-}</pre>
   </div>
 </section>
 

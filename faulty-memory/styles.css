@@ -327,46 +327,71 @@ figure.full.half { max-width: 640px; margin-left: auto; margin-right: auto; }
   .schedule-toggle { grid-template-columns: 1fr; }
 }
 
-/* =========================== FAILURE GRID =========================== */
-.failure-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 56px;
+/* =========================== FAILURE LIST =========================== */
+.failure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
   margin-top: 40px;
 }
 .failure {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 28px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.failure-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
 }
 .failure-num {
   font-family: var(--sans);
-  font-size: 56px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: .9;
+  line-height: 1;
   color: var(--accent);
-  letter-spacing: -.04em;
+  letter-spacing: .04em;
   font-feature-settings: "tnum" 1;
+  flex: 0 0 auto;
 }
-.failure h3 {
-  font-size: 1.6rem;
-  margin-top: 8px;
+.failure-title {
+  font-size: 1.7rem;
+  margin: 0;
+  line-height: 1.1;
 }
+.failure-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.failure-text { min-width: 0; }
+.failure-text p { margin-bottom: 1em; }
+.failure-text p:last-child { margin-bottom: 0; }
 .failure-evidence {
   background: #fff;
   border: 1px solid var(--rule);
   border-radius: 10px;
   padding: 16px 20px;
   font-size: .98rem;
+  line-height: 1.55;
   color: var(--ink-soft);
-  margin: 14px 0 18px;
 }
-.failure figure { margin: 6px 0 0; }
-.failure figure img { max-height: 360px; object-fit: contain; }
-@media (max-width: 760px) {
-  .failure { grid-template-columns: 1fr; gap: 12px; }
-  .failure-num { font-size: 40px; }
+.failure-figure { margin: 0; min-width: 0; }
+.failure-figure img {
+  max-height: 320px;
+  width: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+@media (max-width: 880px) {
+  .failure-body {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .failure-figure img { max-height: 280px; }
 }
 
 /* =========================== REGIMES =========================== */
