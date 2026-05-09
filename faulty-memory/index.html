@@ -843,6 +843,29 @@
       </figcaption>
     </figure>
 
+    <h3 class="sub-h">ARC-AGI GT Stream: 400 steps, ground-truth solutions, all four management policies.</h3>
+    <p>
+      The cleanest test of the gating prediction is the GT regime, where the agent receives ground-truth solutions at every step. There is no "the trajectories were noisy" excuse here. Whatever happens at the consolidation step is what happens.
+    </p>
+
+    <figure class="full">
+      <img src="figures/gt_400.png" alt="ARC-AGI GT Stream over 400 steps: Auto+Episodic beats Force; the gap widens with training.">
+      <figcaption>
+        <strong>ARC-AGI GT Stream, 400 training steps.</strong> Force lags from step ~50 onward. The Auto+Episodic curve climbs and stays climbing; Force plateaus and is overtaken. Same model, same trajectories, same ground-truth solutions &mdash; just a different rule about whether abstraction is mandatory.
+      </figcaption>
+    </figure>
+
+    <p>
+      To isolate where the Auto+Episodic gain comes from, we re-evaluated four checkpoints from the same run with each memory source restricted in turn: <em>Abstract Only</em> reads just the distilled lessons, <em>Episodic Only</em> reads just the raw episodic store, and <em>Auto</em> reads both.
+    </p>
+
+    <figure class="full">
+      <img src="figures/gt_400_components.png" alt="GT Stream component ablation: Episodic Only recovers nearly all of the Auto gain; Abstract Only never beats no-memory.">
+      <figcaption>
+        <strong>The abstract store is doing none of the work.</strong> Reading <em>only</em> distilled lessons (Abstract Only) never improves on the no-memory baseline at any of the four checkpoints. Reading <em>only</em> raw episodes (Episodic Only) recovers nearly the entire Auto gain. The combined Auto reading is, at best, marginally better than Episodic Only alone &mdash; meaning the consolidator's distillations are contributing roughly zero on top of the raw episodes the agent already chose to keep.
+      </figcaption>
+    </figure>
+
     <p>
       And the agent itself agrees, when given the choice. It saturates the episodic buffer quickly at every budget level and keeps the abstract store sparse:
     </p>
