@@ -40,8 +40,16 @@
       Useful memories become <span class="accent">faulty</span><br/>
       when continuously updated by&nbsp;LLMs
     </h1>
+
+    <aside class="disclaimer disclaimer-hero">
+      <div class="disclaimer-label">A note before you read</div>
+      <p>
+        I'm new to this area and just sharing what I found while poking at it. The framing here is mine, the experiments are real, but I might be missing context, conflating things, or just plain wrong on some points. Treat this less as a verdict and more as a starting conversation. Discussions very welcome &mdash; reach out at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+      </p>
+    </aside>
+
     <p class="hero-sub">
-      An LLM agent that re-writes its own experience into textual lessons doesn't just stop improving. It can become <em>worse than the same agent with no memory at all</em>&mdash;even on problems it had already solved.
+      When an LLM agent rewrites its own experience into textual lessons, more updates don't always make the memory more useful. In several settings we looked at, the agent ended up performing worse than the same model with no memory at all &mdash; sometimes even on problems it had previously solved.
     </p>
     <div class="hero-authors">
       <div class="author">
@@ -67,13 +75,6 @@
         <li>An <strong>episodic-only</strong> agent (just keep raw rollouts) matches or beats every consolidator we test.</li>
       </ul>
     </div>
-
-    <aside class="disclaimer">
-      <div class="disclaimer-label">A note before you read</div>
-      <p>
-        I'm new to this area and just sharing what I found while poking at it. The framing here is mine, the experiments are real, but I might be missing context, conflating things, or just plain wrong on some points. If anything looks off, or if you've seen something that contradicts (or sharpens) what's here, I'd love to hear it. Treat this less as a verdict and more as a starting conversation. Reach out: <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
-      </p>
-    </aside>
   </div>
 </section>
 

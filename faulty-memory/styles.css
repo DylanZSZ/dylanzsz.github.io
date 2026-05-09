@@ -205,7 +205,7 @@ figure.is-visible { opacity: 1; transform: translateY(0); }
 }
 .tldr-list li { margin-bottom: .55em; }
 
-/* humble disclaimer below the TLDR card */
+/* humble disclaimer */
 .disclaimer {
   margin: 22px auto 0;
   max-width: 600px;
@@ -217,6 +217,12 @@ figure.is-visible { opacity: 1; transform: translateY(0); }
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--ink-soft);
+}
+.disclaimer-hero {
+  margin: 0 0 28px 0;
+  max-width: 660px;
+  background: rgba(255,255,255,.55);
+  border-color: rgba(193,70,46,.35);
 }
 .disclaimer-label {
   font-size: 11px;
