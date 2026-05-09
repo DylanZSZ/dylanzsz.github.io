@@ -205,6 +205,34 @@ figure.is-visible { opacity: 1; transform: translateY(0); }
 }
 .tldr-list li { margin-bottom: .55em; }
 
+/* humble disclaimer below the TLDR card */
+.disclaimer {
+  margin: 22px auto 0;
+  max-width: 600px;
+  padding: 16px 20px;
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+  background: rgba(255,255,255,.5);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.disclaimer-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.disclaimer p { margin: 0; }
+.disclaimer a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+.disclaimer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
 /* kicker / lede */
 .kicker {
   font-family: var(--sans); font-size: 12.5px; font-weight: 600;
