@@ -243,15 +243,26 @@
                     <div class="bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden hover-card hover:shadow-hover">
                         <div class="divide-y divide-slate-100">
                             <!-- New: faulty-memory blog -->
-                            <a href="/faulty-memory/" class="block p-6 flex gap-6 items-start group bg-sky-50/60 hover:bg-sky-50 transition-colors border-l-4 border-sky-500 no-underline">
+                            <div class="p-6 flex gap-6 items-start group bg-sky-50/60 hover:bg-sky-50 transition-colors border-l-4 border-sky-500">
                                 <div class="w-28 flex-shrink-0 text-sm font-mono text-sky-700 mt-1 flex items-center gap-2 font-semibold">
                                     <i class="fa-regular fa-calendar"></i> May 2026
                                 </div>
                                 <div class="text-slate-700 leading-relaxed">
                                     <span class="bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full text-xs font-bold mr-2">NEW · WRITING</span>
-                                    New interactive write-up: <span class="font-bold text-slate-900 group-hover:text-sky-700 transition-colors underline decoration-slate-300 decoration-2 underline-offset-2">Useful Memories Become Faulty When Continuously Updated by LLMs</span> — why agents that compress their own experience into textual lessons can end up worse than the same model with no memory at all, even on problems they already solved. <span class="text-slate-500">(read time ≈ 10 min)</span>
+                                    New interactive write-up: <a href="/faulty-memory/" class="font-bold text-slate-900 hover:text-sky-700 transition-colors underline decoration-slate-300 decoration-2 underline-offset-2">Useful Memories Become Faulty When Continuously Updated by LLMs</a> — why agents that compress their own experience into textual lessons can end up worse than the same model with no memory at all, even on problems they already solved. <span class="text-slate-500">(read time ≈ 10 min)</span>
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        <a href="/faulty-memory/" class="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-600 text-white hover:bg-sky-700 rounded-md text-xs font-semibold transition-colors no-underline">
+                                            <i class="fa-solid fa-book-open"></i> Read blog
+                                        </a>
+                                        <a href="https://arxiv.org/pdf/2605.12978" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-sky-700 hover:bg-sky-50 border border-sky-300 rounded-md text-xs font-semibold transition-colors no-underline">
+                                            <i class="fa-solid fa-file-pdf"></i> Paper (PDF)
+                                        </a>
+                                        <a href="https://arxiv.org/abs/2605.12978" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-sky-700 hover:bg-sky-50 border border-sky-300 rounded-md text-xs font-semibold transition-colors no-underline">
+                                            <i class="fa-solid fa-scroll"></i> arXiv
+                                        </a>
+                                    </div>
                                 </div>
-                            </a>
+                            </div>
 
                             <!-- Highlighted Paper Feb 2026 -->
                             <div class="p-6 flex gap-6 items-start group bg-orange-50/60 hover:bg-orange-50 transition-colors border-l-4 border-uiuc-orange">
@@ -392,6 +403,20 @@
                                 <h3 class="text-lg font-bold text-uiuc-orange mb-6 transition-colors">2026</h3>
 
                                 <div class="space-y-8">
+                                    <!-- Paper: Faulty Memory -->
+                                    <article class="group/paper bg-sky-50/50 border border-sky-100 rounded-2xl p-5">
+                                        <div class="mb-3 flex flex-wrap gap-2">
+                                            <span class="bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full text-xs font-bold">PREPRINT</span>
+                                            <a href="/faulty-memory/" class="bg-white text-sky-700 border border-sky-200 px-2.5 py-0.5 rounded-full text-xs font-bold hover:bg-sky-50 transition-colors">Interactive write-up ↗</a>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="https://arxiv.org/pdf/2605.12978" target="_blank" class="hover:underline decoration-2 underline-offset-2">Useful Memories Become Faulty When Continuously Updated by LLMs</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang</span>, et al.
+                                        </p>
+                                    </article>
+
                                     <!-- Paper 1 -->
                                     <article class="group/paper bg-orange-50/50 border border-orange-100 rounded-2xl p-5">
                                         <div class="mb-3">
