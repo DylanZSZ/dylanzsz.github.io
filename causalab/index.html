@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CausaLab — Can LLM Agents Discover Causal Mechanisms by Experiment?</title>
+<meta name="description" content="CausaLab puts LLM agents in a synthetic laboratory and asks them to discover hidden causal mechanisms the way scientists do — by intervening, observing, and revising. They can predict without understanding, and they stop experimenting too soon." />
+
+<meta property="og:title" content="CausaLab: Interactive Causal Discovery Toward AI Scientists" />
+<meta property="og:description" content="A scalable environment that scores not just whether an agent gets the answer, but whether it recovered the causal mechanism — by experimenting like a scientist." />
+<meta property="og:type" content="article" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#top"><span class="brand-dot"></span> CausaLab</a>
+    <ul class="topnav-links">
+      <li><a href="#tldr">TL;DR</a></li>
+      <li><a href="#two-ways">Two&nbsp;ways</a></li>
+      <li><a href="#lab">The&nbsp;lab</a></li>
+      <li><a href="#dsl">Auditing&nbsp;thought</a></li>
+      <li><a href="#parrot">Predict≠Understand</a></li>
+      <li><a href="#interaction">How&nbsp;you&nbsp;experiment</a></li>
+      <li><a href="#scale">Scale</a></li>
+      <li><a href="#stopping">Stopping&nbsp;early</a></li>
+      <li><a href="#scientist">AI&nbsp;scientists</a></li>
+      <li><a href="#takeaways">Takeaways</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header id="top" class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">A scalable environment for interactive causal discovery</div>
+    <h1 class="hero-title">
+      Can an LLM agent <span class="accent">discover</span> a causal&nbsp;law<br/>
+      the way a scientist would &mdash; by experimenting?
+    </h1>
+
+    <p class="hero-sub">
+      A real scientist does not look up how the world works. They <em>intervene</em> on it, watch what changes, and revise a theory until it transfers to a case they have never seen. <strong>CausaLab</strong> drops an LLM agent into a synthetic laboratory and asks for exactly that. The headline: today's best agents can predict the right answer while having recovered the <em>wrong mechanism</em> &mdash; and they stop experimenting long before they should.
+    </p>
+
+    <aside class="disclaimer">
+      <div class="disclaimer-label">A note before you read</div>
+      <p>
+        This is an informal companion to our paper. The framing here &mdash; interaction as the thing that separates a scientist from a search engine &mdash; is the lens I find most exciting; the experiments are real, but I'm surely missing context on some of it. Treat it as a starting conversation. Comments very welcome at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+      </p>
+    </aside>
+
+    <p class="hero-joint">
+      Joint work with <strong>Junlin Yang</strong>, Xiangchen Song, Qirun Dai, Xiao Liu, Yuen Chen, Aniket Vashishtha, Jing Shi, Chenhao Tan, and Hao Peng &mdash; across Tsinghua, UIUC, CMU, the University of Chicago, and Adobe.
+    </p>
+
+    <div class="hero-links">
+      <a class="pill" href="https://github.com/DylanZSZ/CausaLab" target="_blank" rel="noopener">Code ↗</a>
+      <a class="pill pill-ghost" href="#lab">How it works ↓</a>
+    </div>
+  </div>
+  <div class="hero-scroll">scroll ↓</div>
+</header>
+
+<main>
+
+<!-- =============================================================== -->
+<section id="tldr" class="band band-tldr">
+  <div class="container narrow">
+    <div class="tldr-card">
+      <div class="tldr-label">TL;DR</div>
+      <ul class="tldr-list">
+        <li>CausaLab evaluates <strong>two things at once</strong>: did the agent solve the task, and is its answer grounded in a <em>faithful recovered causal mechanism</em>? Each episode hides a freshly sampled structural causal model (SCM), so you can't win by reciting memorized causal facts.</li>
+        <li><strong>Prediction ≠ understanding.</strong> On observational 6-node graphs, <code>GPT-5.2-high</code> reaches <strong>92%</strong> task accuracy but only <strong>0.47</strong> all-edge&nbsp;F<sub>1</sub>. The right number, the wrong graph.</li>
+        <li><strong>How you experiment is the whole game.</strong> Observation narrows the hypothesis space; <em>agent-chosen</em> interventions recover faithful structure. Handing the agent someone else's perfect intervention data ("Golden") boosts the answer but <em>not</em> the mechanism — the <em>act of choosing</em> the experiment is what carries the structural signal.</li>
+        <li><strong>Agents fail by stopping early.</strong> Win or lose, runs leave ~half their intervention budget unused, and failed runs commit to hypotheses that don't even fit their own data. A single "check your theory against your evidence" step lifts 4-node accuracy <strong>48% → 60%</strong>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="two-ways" class="band">
+  <div class="container narrow">
+    <div class="kicker">Why interaction</div>
+    <h2>Two ways an LLM can be "useful" about cause and effect.</h2>
+    <p>
+      Suppose you want to know how a crystal's temperature drives its resonance frequency. An LLM agent can help in two very different ways.
+    </p>
+
+    <div class="controls" style="grid-template-columns: 1fr 1fr;">
+      <div class="control">
+        <h4>① Retrieve</h4>
+        <p>Recall from Wikipedia or its training data that <em>temperature causes frequency</em>. Fast, often right &mdash; and useless the moment the answer lies beyond the current frontier of human knowledge.</p>
+        <span class="ctl-stat">good for: settled science</span>
+      </div>
+      <div class="control">
+        <h4>② Discover</h4>
+        <p>Observe measurements, form a hypothesis, <em>design an experiment</em>, intervene, watch what changes, and infer the mechanism from the evidence &mdash; the way a scientist works.</p>
+        <span class="ctl-stat">good for: the unknown</span>
+      </div>
+    </div>
+
+    <p style="margin-top: 26px;">
+      Both matter. But only <strong>②</strong> can push the frontier outward, and only ② is what we mean when we talk about <em>AI scientists</em>. The trouble is that almost every causal-reasoning benchmark tests <strong>①</strong> &mdash; turning a known causal graph into a quiz. That leaves the <em>"causal parrot"</em> worry wide open <a class="cite" data-tip="Zečević et al. (2023): LLMs may answer causal questions by reciting memorized causal lexicon rather than reasoning causally.">[ref]</a>: a model can ace the test by parroting causal facts it has read, never having reasoned causally at all.
+    </p>
+    <p>
+      CausaLab is built to test ② &mdash; and to make it impossible to fake with ①.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="lab" class="band band-tint">
+  <div class="container">
+    <div class="kicker">The environment</div>
+    <h2>A synthetic laboratory with a hidden law of nature.</h2>
+    <p class="lede">
+      Every episode is a tiny, self-contained science problem. A hidden structural causal model &mdash; a causal graph plus its structural equations and coefficients &mdash; is sampled fresh, and the agent never sees it. It only gets to <em>do experiments</em> and reason from what comes back.
+    </p>
+
+    <figure class="full">
+      <img src="figures/episode_overview.png" alt="Overview of a CausaLab episode: a hidden SCM generates records; the agent intervenes on a manipulator crystal and observes; it emits a DSL hypothesis at each step; it predicts the held-out reactor frequency, scored on both prediction and recovered mechanism.">
+      <figcaption>
+        <strong>One CausaLab episode.</strong> A hidden SCM generates prior records, a <em>manipulator</em> crystal the agent can poke, and a held-out <em>reactor</em> crystal governed by the same law. The agent intervenes, observes, writes down its current causal hypothesis, and finally predicts the reactor's hidden <code>frequency</code>. We score the prediction <em>and</em> the recovered graph + equation against ground truth.
+      </figcaption>
+    </figure>
+
+    <p>
+      The cover story is deliberately alien &mdash; "Quantum Crystals on Planet X," with properties like <code>radiation</code>, <code>temperature</code>, <code>conductivity</code>, and a target <code>frequency</code> &mdash; precisely so the agent <em>cannot</em> lean on real-world priors. To win, it has to figure out the wiring from scratch.
+    </p>
+
+    <h3 class="sub-h">The experimental loop</h3>
+    <p>
+      Each episode is a repeated hypothesize → experiment → observe → revise cycle &mdash; the same loop that defines empirical science.
+    </p>
+
+    <div class="loop-steps">
+      <div class="loop-step">
+        <span class="ls-num">1</span>
+        <h4>Read the records</h4>
+        <p>Start from a batch of prior measurements: properties and the resulting frequency from earlier crystals under the same law.</p>
+      </div>
+      <div class="loop-step">
+        <span class="ls-num">2</span>
+        <h4>Intervene</h4>
+        <p>Set one controllable property on the manipulator crystal through the Property Manipulator. Budget is finite.</p>
+      </div>
+      <div class="loop-step">
+        <span class="ls-num">3</span>
+        <h4>Observe &amp; revise</h4>
+        <p>See how the other properties and frequency respond. Update the causal hypothesis — direct edge, or path through a mediator?</p>
+      </div>
+      <div class="loop-step">
+        <span class="ls-num">4</span>
+        <h4>Transfer</h4>
+        <p>Apply the inferred mechanism to a <em>different</em> crystal — the reactor — and predict its hidden frequency.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">The design trick</div>
+      <p>
+        The reactor crystal has <em>different property values</em> from anything the agent saw. So you can't copy an observed frequency &mdash; you must recover a mechanism that <strong>transfers</strong>. And because interventions are shift-style (they nudge a variable's baseline while keeping its upstream causes intact), watching the downstream ripple is genuinely informative about who-causes-whom.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="dsl" class="band">
+  <div class="container">
+    <div class="kicker">Making thought auditable</div>
+    <h2>A tiny language that turns reasoning into a scored object.</h2>
+    <p>
+      A final number can't tell a lucky guess apart from genuine discovery. So at every step the agent emits a compact <strong>DSL record</strong> with five fields. Only one of them &mdash; the <em>Hypothesis</em> &mdash; is parsed into a graph + equation + coefficients and scored against the hidden SCM. That gives us a frame-by-frame movie of the theory the agent is committing to.
+    </p>
+
+    <div class="memory-card">
+      <div class="memory-card-head">
+        <span class="memory-card-label">DSL record · one step</span>
+        <span class="memory-card-tag">parsed into a candidate SCM</span>
+      </div>
+      <div class="memory-card-body dsl-record">
+        <span class="dsl-row"><span class="dsl-field">memory</span> cooling lowers freq when cond is high</span>
+        <span class="dsl-row"><span class="dsl-field">thought</span> isolate qSize from tempC: shift radiation, watch both</span>
+        <span class="dsl-row"><span class="dsl-field">data</span> &nbsp;{…accumulated observations &amp; intervention outcomes…}</span>
+        <span class="dsl-row"><span class="dsl-field">hypothesis</span> <span class="edge edge-good">rad → tempC</span> <span class="edge edge-good">tempC → cond</span> <span class="edge edge-good">cond → freq</span> &nbsp;·&nbsp; <span class="hl">freq = b + k·cond</span></span>
+        <span class="dsl-row"><span class="dsl-field">experiment</span> do<sub>shift</sub>(tempC = 360) — does freq move via cond?</span>
+      </div>
+      <div class="memory-card-foot">
+        Only the <strong>hypothesis</strong> field is a scored artifact. A deterministic parser turns it into a directed graph and a <code>frequency</code> equation, so the benchmark can grade the agent's evolving theory — not just its last guess. The other four fields are scratch space.
+      </div>
+    </div>
+
+    <p>
+      Rendered over a whole trajectory, the DSL becomes a live diagnostic: ground-truth graph on one side, the agent's hypothesis graph on the other, edge precision/recall climbing (or not) as the experiments accumulate.
+    </p>
+
+    <figure class="full">
+      <img src="figures/causal_visualization.png" alt="Trajectory-level visualization: ground-truth causal graph, the agent's hypothesis graph (3 of 5 edges correct), and edge precision/recall curves over the interaction sequence.">
+      <figcaption>
+        <strong>Watching a theory form.</strong> The platform exposes the ground-truth graph, the agent's current hypothesis graph (here, 3 of 5 edges correct), and precision/recall over the interaction sequence. Because every step is logged, we can ask not just <em>whether</em> the agent was right but <em>when</em> and <em>why</em> it committed.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="parrot" class="band band-dark">
+  <div class="container">
+    <div class="kicker">Finding 1</div>
+    <h2>The right answer, the wrong mechanism.</h2>
+    <p class="lede">
+      Because CausaLab scores prediction and mechanism <em>separately</em>, we can catch the thing single-number benchmarks can't: an agent that nails the held-out <code>frequency</code> while having recovered a graph that's simply wrong.
+    </p>
+
+    <div class="statstrip">
+      <div class="stat-card"><div class="stat-num">92%</div><div class="stat-label">task accuracy<br/>(GPT-5.2-high, obs-only, 6 nodes)</div></div>
+      <div class="stat-card"><div class="stat-num alt">0.47</div><div class="stat-label">all-edge F<sub>1</sub><br/>same runs</div></div>
+      <div class="stat-card"><div class="stat-num">64%</div><div class="stat-label">accuracy at 7 nodes<br/>even for the strongest model</div></div>
+      <div class="stat-card"><div class="stat-num alt">4.76</div><div class="stat-label">directed SHD at 7 nodes<br/>graph recovery degrades</div></div>
+    </div>
+
+    <p style="margin-top: 30px;">
+      The two axes don't move together &mdash; they come apart in three distinct, controllable ways. Click through:
+    </p>
+
+    <div class="tab-browser" data-tab-group="rq1">
+      <div class="tab-strip" role="tablist">
+        <button class="tab-btn is-active" role="tab" data-tab="form" aria-selected="true">Change the functional form</button>
+        <button class="tab-btn" role="tab" data-tab="noise" aria-selected="false">Add hidden noise</button>
+        <button class="tab-btn" role="tab" data-tab="edges" aria-selected="false">Move the target's edges</button>
+      </div>
+
+      <div class="tab-panel is-active" data-tab-panel="form">
+        <div class="memory-card">
+          <div class="memory-card-body">
+            <p>Hold the 4-node topology fixed; swap the linear mechanism for a hard-quadratic one. <code>GPT-5-mini</code>'s task accuracy <strong>roughly halves</strong> (≈46% → 24%) and the quantitative <code>frequency</code>-weight F<sub>1</sub> collapses with it &mdash; yet all-edge F<sub>1</sub> and root-node F<sub>1</sub> hold steady or even <em>rise</em>.</p>
+          </div>
+          <div class="memory-card-foot">
+            The agent still finds the right parents. It just can't pin the quantitative law that connects them. <strong>It loses the mechanism, not the graph.</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="noise" hidden>
+        <div class="memory-card">
+          <div class="memory-card-body">
+            <p>Inject an unobserved disturbance that perturbs the system after each intervention. <em>Off-target</em> noise barely dents accuracy (40–54% vs 48% baseline) but drags all-edge F<sub>1</sub> from 0.79 down to 0.61–0.70. When the noise can hit <code>frequency</code> <em>itself</em>, accuracy falls to 26–40%.</p>
+          </div>
+          <div class="memory-card-foot">
+            Some "correct" predictions were fitting a fragile local target equation, not a mechanism robust to perturbation. Shake the target and the prediction falls over.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="edges" hidden>
+        <div class="memory-card">
+          <div class="memory-card-body">
+            <p>The <em>FreqParent</em> control lets <code>frequency</code> have outgoing edges while keeping edge counts matched. Accuracy <em>rises</em> on 4- and 6-node graphs &mdash; the target has fewer incoming edges to fit &mdash; while all-edge recovery <em>falls</em>, because global directionality is now harder.</p>
+          </div>
+          <div class="memory-card-foot">
+            Making the answer easier and the structure harder pushes the two scores in opposite directions. Proof they measure different things.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <figure class="full">
+      <img src="figures/linear_vs_quad.png" alt="Linear vs quadratic on matched 4-node topologies: task accuracy and frequency-weight F1 collapse while all-edge F1 and root-node F1 are preserved or rise.">
+      <figcaption>
+        <strong>Linear → hard-quadratic, same topology.</strong> Task accuracy and <code>frequency</code>-weight F<sub>1</sub> drop sharply (Δ&nbsp;−22); all-edge and root-node F<sub>1</sub> actually go up. Agents lose the quantitative mechanism, not the qualitative graph.
+      </figcaption>
+    </figure>
+
+    <div class="takeaway">
+      <p>Prediction accuracy is <strong>necessary but not sufficient</strong> evidence of mechanism recovery. A causal-reasoning benchmark that scores only the answer cannot tell discovery from a well-tuned guess.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="interaction" class="band">
+  <div class="container">
+    <div class="kicker">Finding 2 · the heart of it</div>
+    <h2>How you experiment determines what you learn.</h2>
+    <p class="lede">
+      This is the part I find most interesting. Causal discovery is not a passive reading task &mdash; it's a sequence of <em>choices</em> about what to do next. CausaLab lets us vary the interaction regime while holding the underlying law fixed, and the difference is stark.
+    </p>
+
+    <div class="schedule-toggle" role="tablist" aria-label="Interaction regimes">
+      <button class="schedule-btn is-active" data-schedule="obs" role="tab" aria-selected="true">
+        <span class="schedule-key">Observation only</span>
+        <span class="schedule-desc">Read prior records. Never intervene.</span>
+      </button>
+      <button class="schedule-btn" data-schedule="mixed" role="tab" aria-selected="false">
+        <span class="schedule-key">Observation + intervention</span>
+        <span class="schedule-desc">Observe to narrow, then choose experiments online.</span>
+      </button>
+      <button class="schedule-btn" data-schedule="int" role="tab" aria-selected="false">
+        <span class="schedule-key">Intervention only</span>
+        <span class="schedule-desc">Start poking with no observations first.</span>
+      </button>
+    </div>
+
+    <div class="schedule-panel" id="schedule-panel" data-active="obs">
+      <p class="schedule-readout" data-for="obs">
+        <strong>High accuracy, hollow understanding.</strong> Pure observation often gives the <em>best</em> end-task accuracy on easy graphs &mdash; correlations are enough to extrapolate a number. But the recovered graph is weak: <span class="stat">92% accuracy / 0.47 F<sub>1</sub></span> for GPT-5.2-high on 6 nodes. It guesses well without knowing why.
+      </p>
+      <p class="schedule-readout" data-for="mixed" hidden>
+        <strong>The best balance.</strong> Observation first narrows the hypothesis space; then <em>agent-chosen</em> interventions disambiguate the structure. Same model, same 6-node graphs: <span class="stat">80% accuracy / 0.80 F<sub>1</sub></span> — a small accuracy cost for a near-doubling of graph fidelity.
+      </p>
+      <p class="schedule-readout" data-for="int" hidden>
+        <strong>Weak on both axes.</strong> Intervening before observation means flailing in a hypothesis space you haven't narrowed. Interventions only pay off <em>after</em> observations have told you which experiments are worth running.
+      </p>
+    </div>
+
+    <figure class="full">
+      <img src="figures/pareto_migration.png" alt="Prediction-vs-recovery scatter: Obs-only to Mixed arrows for four model/size suites; mixed regimes shift mass toward higher all-edge F1 at comparable task accuracy.">
+      <figcaption>
+        <strong>Obs-only → Mixed, across four suites.</strong> Each arrow goes from observation-only to mixed for one model and graph size. Mixed regimes consistently climb toward higher graph fidelity at comparable or better task accuracy. Intervention is what buys structure.
+      </figcaption>
+    </figure>
+
+    <h3 class="sub-h">But is it the <em>data</em>, or the <em>act of choosing</em>?</h3>
+    <p>
+      Here's the sharpest test. We can hand the agent a bounded, high-quality intervention chain &mdash; a "Golden" trace of exactly the right experiments &mdash; instead of letting it choose its own. If the structural signal lived in the intervention <em>data</em>, this should recover the graph beautifully.
+    </p>
+    <p>
+      It doesn't. Golden traces lift task accuracy hugely (<strong>48% → 90%</strong> on 4 nodes, <strong>24% → 44%</strong> on 6 nodes) while <em>lowering</em> all-edge F<sub>1</sub>. The handed-over experiments behave like stronger observations: they help fit the target equation, but they do not replace the structural signal that comes from the agent running its own intervention loop.
+    </p>
+
+    <figure class="full half">
+      <img src="figures/golden_tradeoff.png" alt="Golden intervention chains: baseline to Golden arrows raise task accuracy sharply but reduce all-edge F1 on both 4-node and 6-node graphs.">
+      <figcaption>
+        <strong>Golden = better answers, not better structure.</strong> Injecting an expert intervention chain moves accuracy right but pulls graph F<sub>1</sub> down. Offline intervention data ≠ online experimental choice.
+      </figcaption>
+    </figure>
+
+    <div class="takeaway">
+      <p>Observation-conditioned, <strong>self-chosen</strong> intervention gives the best balance: observations narrow the space, and the agent's own experiments recover faithful structure. The discovery lives in the <em>choosing</em>, not just the data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="scale" class="band band-tint">
+  <div class="container">
+    <div class="kicker">Finding 3</div>
+    <h2>Scale helps — but unevenly, and not where you'd hope.</h2>
+    <p>
+      Across the full 3–7 node sweep we compare <code>GPT-5.2-high</code>, <code>GPT-5-mini</code>, and <code>Qwen3.5</code> with and without thinking. The strongest model wins overall &mdash; best accuracy, lowest structural Hamming distance at every size &mdash; but the gains concentrate on direct-parent and coefficient fitting. Root-node discovery barely improves on the larger graphs, and even the best model unravels as graphs grow.
+    </p>
+
+    <div class="grid-2">
+      <figure>
+        <img src="figures/radar_accuracy.png" alt="Radar of task accuracy across 3–7 nodes for four models; GPT-5.2-high dominates but all models fall off as graphs grow.">
+        <figcaption><strong>Task accuracy.</strong> GPT-5.2-high (red) leads at every graph size, but every model falls off as the graph grows from 3 to 7 nodes.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/radar_shd.png" alt="Radar of directed all-edge SHD across 3–7 nodes; lower is better; Qwen's SHD rises faster as graphs grow; thinking helps Qwen.">
+        <figcaption><strong>Directed SHD</strong> (lower is better). Open-weight Qwen's structural error rises fastest with graph size; thinking traces help Qwen recover structure, but don't close the gap to GPT-5.2-high.</figcaption>
+      </figure>
+    </div>
+
+    <div class="takeaway">
+      <p>Scaling improves direct-parent and coefficient recovery, but does <strong>not</strong> remove the need for better exploration and mechanism-checking. The bottleneck is behavioral, not just capacity.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="stopping" class="band band-dark">
+  <div class="container">
+    <div class="kicker">Finding 4 · the un-scientific habit</div>
+    <h2>Agents fail by committing before they've checked.</h2>
+    <p class="lede">
+      The single most human-recognizable failure: the agents stop experimenting too soon. A good scientist keeps probing until the theory survives its own data. These agents treat a plausible first guess as a finished result &mdash; the opposite of skepticism.
+    </p>
+
+    <p>
+      The DSL traces let us prove this rather than just assert it. Three observations, in order:
+    </p>
+
+    <div class="grid-3">
+      <figure>
+        <img src="figures/budget_used.png" alt="Both successful and failed runs leave roughly half the intervention budget unused.">
+        <figcaption><strong>Budget left on the table.</strong> Win or lose, runs use only about half their allowed interventions. Failure isn't running out of experiments — it's not running them.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/hypothesis_data_match.png" alt="Hypothesis-data match: successful runs 90.8%, failed runs 45.6%.">
+        <figcaption><strong>Failed theories don't fit their own evidence.</strong> At the moment of commitment, successful runs' hypotheses match the data they collected <strong>90.8%</strong> of the time; failed runs, just <strong>45.6%</strong>.</figcaption>
+      </figure>
+      <figure>
+        <img src="figures/verification_gain.png" alt="A single verification step raises 4-node task accuracy from 48% to 60%.">
+        <figcaption><strong>One check, +12 points.</strong> Adding a single step that asks the agent to verify its final hypothesis against its evidence lifts 4-node accuracy <strong>48% → 60%</strong>.</figcaption>
+      </figure>
+    </div>
+
+    <p>
+      So the failure mode isn't an exhausted budget or missing data &mdash; it's <strong>overconfidence</strong>. Agents promote an unverified hypothesis to a final theory instead of spending the budget they still have on disambiguating experiments. The fix is almost embarrassingly cheap: a dose of the scientific method, applied as a single "does my theory explain what I've seen?" check.
+    </p>
+
+    <div class="callout callout-finding">
+      <div class="callout-label">Why this is encouraging</div>
+      <p>
+        A capacity ceiling would be bad news. A <em>behavioral</em> gap is good news: it means the models often <em>can</em> discover the mechanism &mdash; they just don't keep going. Scaffolding that enforces "experiment, then verify before committing" is a tractable lever, not a new pre-training run.
+      </p>
+    </div>
+
+    <div class="takeaway">
+      <p>Many failures are not caused by an exhausted budget; they are caused by <strong>committing before checking whether the proposed mechanism explains the evidence already collected.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="scientist" class="band">
+  <div class="container narrow">
+    <div class="kicker">The bigger picture</div>
+    <h2>What this says about AI scientists.</h2>
+    <p>
+      The dream of an AI scientist is not a model that recites known laws faster. It's an agent that can stand at the edge of what's known, <em>design an experiment</em>, run it, and revise its theory toward a mechanism that transfers. That capacity &mdash; interactive causal discovery &mdash; is exactly what CausaLab isolates and measures.
+    </p>
+    <p>
+      Read together, the four findings sketch a clear profile of where today's agents stand on that path:
+    </p>
+    <ul class="reframe-list">
+      <li><strong>They can extrapolate without explaining.</strong> High accuracy with low graph fidelity means an agent that predicts the next reading but couldn't tell you which knob to turn to change it &mdash; useless for intervention-driven science.</li>
+      <li><strong>Their discovery lives in the doing.</strong> Self-chosen interventions recover structure that even perfect handed-over data does not. An AI scientist has to be the one designing the experiments.</li>
+      <li><strong>They quit while ahead.</strong> The gap between current agents and good scientists is, in large part, a willingness to keep testing. That's a scaffolding problem, and a solvable one.</li>
+    </ul>
+    <p>
+      CausaLab joins a growing line of interactive scientific-agent and causal-discovery environments <a class="cite" data-tip="Auto-Bench (Chen et al. 2025), CausalGame (Chen et al. 2026), iGDA, and reliable-AI-scientist reverse-engineering work, among others.">[refs]</a>. What it adds is the insistence on <em>transfer</em> &mdash; learn the mechanism on one crystal, apply it to another &mdash; and an auditable trace of the theory the agent commits to at every step. That combination is what lets us separate predictive luck from causal understanding.
+    </p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="takeaways" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">Takeaways</div>
+    <h2>If you build or benchmark causal agents.</h2>
+    <ol class="big-ol">
+      <li><strong>Score the mechanism, not just the answer.</strong> Prediction accuracy hides causal-parrot behavior. Grade the recovered graph and equation against ground truth.</li>
+      <li><strong>Sample the world fresh.</strong> A per-episode hidden SCM removes the memorized-fact shortcut that public causal corpora leave open.</li>
+      <li><strong>Let the agent choose its experiments.</strong> Offline intervention data is not a substitute for online experimental choice. Test the loop, not just the dataset.</li>
+      <li><strong>Demand transfer.</strong> A mechanism you can't apply to a new instance isn't a mechanism — it's a fitted curve. Hold out a fresh case.</li>
+      <li><strong>Build in verification.</strong> The cheapest reliability win here was forcing the agent to check its theory against its evidence before committing. Don't let it stop early.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="conclusion" class="band band-dark">
+  <div class="container narrow">
+    <h2>Discovery is interaction, and interaction is the gap.</h2>
+    <p class="lede">
+      CausaLab is a controlled stress test, not a verdict on causal reasoning in the wild &mdash; synthetic 3–7 node SCMs, mostly linear, a handful of models, shift-style interventions. Within that scope, it draws a clean line: current LLM agents can collect evidence and predict a held-out value while recovering an incomplete or wrong mechanism, and they routinely stop experimenting before the evidence warrants.
+    </p>
+    <p>
+      The encouraging reading is that the missing ingredient is largely <em>behavioral</em> &mdash; experiment more, verify before committing, prefer self-chosen interventions. Those are things we can scaffold. Getting them right is a real step toward agents that don't just know our science, but help extend it.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container narrow">
+    <p>
+      &copy; 2026 the CausaLab authors. Code at <a href="https://github.com/DylanZSZ/CausaLab" target="_blank" rel="noopener">github.com/DylanZSZ/CausaLab</a>.
+      Companion write-up by Dylan Zhang — built with HTML, CSS, and a little JavaScript.
+      &nbsp;·&nbsp; <a href="/">← back to homepage</a>
+    </p>
+  </div>
+</footer>
+
+<div id="tooltip" class="tooltip" hidden></div>
+<script src="main.js"></script>
+</body>
+</html>

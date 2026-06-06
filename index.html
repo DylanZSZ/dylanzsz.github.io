@@ -242,6 +242,25 @@
                     </h2>
                     <div class="bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden hover-card hover:shadow-hover">
                         <div class="divide-y divide-slate-100">
+                            <!-- New: CausaLab blog -->
+                            <div class="p-6 flex gap-6 items-start group bg-violet-50/60 hover:bg-violet-50 transition-colors border-l-4 border-violet-500">
+                                <div class="w-28 flex-shrink-0 text-sm font-mono text-violet-700 mt-1 flex items-center gap-2 font-semibold">
+                                    <i class="fa-regular fa-calendar"></i> Jun 2026
+                                </div>
+                                <div class="text-slate-700 leading-relaxed">
+                                    <span class="bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full text-xs font-bold mr-2">NEW · WRITING</span>
+                                    New interactive write-up: <a href="/causalab/" class="font-bold text-slate-900 hover:text-violet-700 transition-colors underline decoration-slate-300 decoration-2 underline-offset-2">CausaLab — Can LLM Agents Discover Causal Mechanisms by Experiment?</a> — putting agents in a synthetic lab to see whether they can <em>intervene, observe, and revise</em> like scientists. They can predict the right answer with the wrong mechanism, and they stop experimenting too soon. <span class="text-slate-500">(read time ≈ 9 min)</span>
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        <a href="/causalab/" class="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-600 text-white hover:bg-violet-700 rounded-md text-xs font-semibold transition-colors no-underline">
+                                            <i class="fa-solid fa-book-open"></i> Read write-up
+                                        </a>
+                                        <a href="https://github.com/DylanZSZ/CausaLab" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-violet-700 hover:bg-violet-50 border border-violet-300 rounded-md text-xs font-semibold transition-colors no-underline">
+                                            <i class="fa-brands fa-github"></i> Code
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- New: faulty-memory blog -->
                             <div class="p-6 flex gap-6 items-start group bg-sky-50/60 hover:bg-sky-50 transition-colors border-l-4 border-sky-500">
                                 <div class="w-28 flex-shrink-0 text-sm font-mono text-sky-700 mt-1 flex items-center gap-2 font-semibold">
@@ -294,6 +313,47 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <!-- NEW SECTION: Interactive Write-ups -->
+                <section class="fade-in" style="animation-delay: 0.42s;">
+                    <h2 class="section-title">
+                        Interactive Write-ups
+                    </h2>
+                    <p class="text-slate-500 -mt-4 mb-8 text-base">Visual, scrollable companions to my papers — built to be read in ~10 minutes.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- CausaLab card -->
+                        <a href="/causalab/" class="group block relative overflow-hidden bg-white p-7 rounded-3xl shadow-soft border border-slate-100 hover-card hover:shadow-hover hover:border-violet-200 transition-all">
+                            <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-violet-100/60 blur-2xl group-hover:bg-violet-200/60 transition-colors"></div>
+                            <div class="relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-xl text-violet-600 shadow-sm border border-violet-100 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-flask-vial"></i>
+                                    </div>
+                                    <span class="bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full text-xs font-bold">CAUSAL DISCOVERY</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors mb-2 leading-snug">CausaLab: Can LLM Agents Discover Causal Mechanisms by Experiment?</h3>
+                                <p class="text-sm text-slate-500 leading-relaxed">Agents in a synthetic lab — intervening, observing, revising. They predict the right answer with the wrong mechanism, and stop experimenting too soon.</p>
+                                <span class="inline-flex items-center gap-1.5 mt-5 text-sm font-semibold text-violet-700">Read write-up <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i></span>
+                            </div>
+                        </a>
+
+                        <!-- Faulty Memory card -->
+                        <a href="/faulty-memory/" class="group block relative overflow-hidden bg-white p-7 rounded-3xl shadow-soft border border-slate-100 hover-card hover:shadow-hover hover:border-sky-200 transition-all">
+                            <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-sky-100/60 blur-2xl group-hover:bg-sky-200/60 transition-colors"></div>
+                            <div class="relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-xl text-sky-600 shadow-sm border border-sky-100 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-brain"></i>
+                                    </div>
+                                    <span class="bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full text-xs font-bold">AGENT MEMORY</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 group-hover:text-sky-700 transition-colors mb-2 leading-snug">Useful Memories Become Faulty When Continuously Updated by LLMs</h3>
+                                <p class="text-sm text-slate-500 leading-relaxed">Agents that compress experience into textual lessons can end up worse than the same model with no memory at all — even on problems they already solved.</p>
+                                <span class="inline-flex items-center gap-1.5 mt-5 text-sm font-semibold text-sky-700">Read write-up <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i></span>
+                            </div>
+                        </a>
                     </div>
                 </section>
 
@@ -403,6 +463,20 @@
                                 <h3 class="text-lg font-bold text-uiuc-orange mb-6 transition-colors">2026</h3>
 
                                 <div class="space-y-8">
+                                    <!-- Paper: CausaLab -->
+                                    <article class="group/paper bg-violet-50/50 border border-violet-100 rounded-2xl p-5">
+                                        <div class="mb-3 flex flex-wrap gap-2">
+                                            <span class="bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full text-xs font-bold">PREPRINT</span>
+                                            <a href="/causalab/" class="bg-white text-violet-700 border border-violet-200 px-2.5 py-0.5 rounded-full text-xs font-bold hover:bg-violet-50 transition-colors">Interactive write-up ↗</a>
+                                        </div>
+                                        <h4 class="font-bold text-slate-900 group-hover/paper:text-uiuc-blue transition-colors text-xl leading-tight mb-2">
+                                            <a href="/causalab/" class="hover:underline decoration-2 underline-offset-2">CausaLab: A Scalable Environment for Interactive Causal Discovery Toward AI Scientists</a>
+                                        </h4>
+                                        <p class="text-slate-600 text-sm leading-relaxed">
+                                            Junlin Yang*, <span class="font-semibold text-slate-900 underline decoration-slate-300 decoration-2 underline-offset-2">Dylan Zhang*</span>, Xiangchen Song, Qirun Dai, Xiao Liu, Yuen Chen, Aniket Vashishtha, Jing Shi, Chenhao Tan, Hao Peng <span class="text-slate-500 italic text-xs ml-1">(*equal contrib, project leads)</span>
+                                        </p>
+                                    </article>
+
                                     <!-- Paper: Faulty Memory -->
                                     <article class="group/paper bg-sky-50/50 border border-sky-100 rounded-2xl p-5">
                                         <div class="mb-3 flex flex-wrap gap-2">
@@ -542,7 +616,7 @@
                 </section>
                 
                 <footer class="pt-16 text-center text-sm font-medium text-slate-400 pb-8">
-                    Last updated: Apr, 2026
+                    Last updated: Jun, 2026
                 </footer>
 
             </main>
