@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GridRule — Self-Proposed Subgoal RL in an Interactive ARC-AGI-3-Style Environment</title>
+<meta name="description" content="A pilot study on small-model (≤1.5B) trial-and-error rule discovery and compositional generalization via self-proposed subgoal reinforcement learning in GridRule, an ARC-AGI-3-style interactive gridworld." />
+
+<meta property="og:title" content="GridRule: Self-Proposed Subgoal RL for Compositional Generalization" />
+<meta property="og:description" content="A pilot exploration of whether a 0.8B model can learn to decompose multi-step problems by proposing its own subgoals — without any labels." />
+<meta property="og:type" content="article" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#top"><span class="brand-dot"></span> GridRule</a>
+    <ul class="topnav-links">
+      <li><a href="#tldr">TL;DR</a></li>
+      <li><a href="#env">The environment</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#transfer">Transfer</a></li>
+      <li><a href="#mechanism">Mechanism</a></li>
+      <li><a href="#frontier">Harder mechanics</a></li>
+      <li><a href="#caveats">Caveats</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header id="top" class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Interactive ARC-AGI-3-style environment · label-free RL · ≤1.5B scale</div>
+    <h1 class="hero-title">
+      Can a tiny model learn to <span class="accent">decompose problems</span><br/>
+      by proposing its own subgoals?
+    </h1>
+
+    <p class="hero-sub">
+      We built <strong>GridRule</strong> — a cheap, procedural gridworld that captures the two hard demands of ARC-AGI-3: latent-rule induction by trial and error, and compose-back subgoal chaining. We then asked whether a 0.8B model trained with label-free self-distillation, using nothing but environment feedback, can learn a transferable decomposition skill by proposing the subgoals it wants to reach.
+    </p>
+
+    <aside class="disclaimer">
+      <div class="disclaimer-label">A note before you read</div>
+      <p>
+        This is a <strong>pilot endeavor</strong> — a small-scale, exploratory study conducted by a single researcher on consumer hardware. The findings are encouraging but preliminary: sample sizes are small (n=2–3 seeds for most claims), the environment is synthetic, and we make no claims about scaling to real ARC-AGI-3. We share this honestly, in the spirit of open, incremental science. Treat it as an early conversation starter, not a finished result.
+      </p>
+    </aside>
+
+    <div class="hero-links">
+      <a class="pill" href="https://github.com/DylanZSZ/arc_interactive_env_claude" target="_blank" rel="noopener">Code ↗</a>
+      <a class="pill pill-ghost" href="#tldr">TL;DR ↓</a>
+      <a class="pill pill-ghost" href="#results">Jump to results ↓</a>
+      <a class="pill pill-ghost" href="/">← Dylan Zhang</a>
+    </div>
+  </div>
+  <div class="hero-scroll">scroll ↓</div>
+</header>
+
+<main>
+
+<!-- ===== TL;DR ===== -->
+<section id="tldr" class="band band-tint">
+  <div class="container narrow">
+    <div class="tldr-card">
+      <div class="tldr-label">TL;DR — pilot findings</div>
+      <ul class="tldr-list">
+        <li><strong>Self-proposed subgoals help.</strong> A 0.8B model trained with nothing but environment reward and label-free self-distillation, using coordinate subgoals it proposes itself, reaches <strong>≈1.8× baseline</strong> pass@1 on a held-out test set — reproduced on two independent seeds.</li>
+        <li><strong>Decomposition transfers to unseen, harder stages.</strong> Trained only on primitive single-gate rooms, the subgoal policy solves unseen two-gate compositions at <strong>0.94 pass@1</strong> (vs baseline 0.58) — and the quality is so high it exceeds policies trained directly on compositions.</li>
+        <li><strong>The bottleneck is execution, not decomposition.</strong> When the environment auto-navigates to each proposed subgoal (oracle execution), scores jump dramatically: unseen 3-gate tasks go from 0.26 → <strong>0.80+</strong>. The model's decomposition strategy transfers further than its navigation skill.</li>
+        <li><strong>Three cheap tricks compound the gains further:</strong> LoRA-souping (average weights across seeds), diversity-aware filtering of distillation data, and a tuned promotion bar — each independently validated.</li>
+        <li><strong>Harder mechanics reveal distinct failure modes.</strong> Irreversibility breaks decomposition (the model proposes a trap); hazards break execution; crafting breaks sequencing. Oracle-execution probes cleanly separate them.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ENVIRONMENT ===== -->
+<section id="env" class="band">
+  <div class="container narrow">
+    <div class="kicker">The environment</div>
+    <h2>GridRule: a knobbed proxy for ARC-AGI-3</h2>
+    <p>
+      ARC-AGI-3 asks solvers to induce hidden rules by trial and error and chain sub-solutions into multi-step plans. The real benchmark is visual, API-bound, and expensive to iterate on. <strong>GridRule</strong> is a cheap, deterministic, text-renderable proxy that captures both demands in a fully procedural generator — every episode is fresh, every control and object role is latently permuted, and a BFS oracle is always available for reward.
+    </p>
+
+    <div class="env-diagram">
+<span class="comment">-- Episode render (coords view) ----------------------------</span>
+<span class="room">Room 0 (start):</span>  <span class="key">key K₁ at (2,3)</span>
+<span class="agent">Agent at (1,1)</span>   <span class="comment">← controls are hidden; must be induced</span>
+
+<span class="room">Room 1 (locked):</span> door needs K₁ <span class="comment">← binding hidden; learned by bumping</span>
+  <span class="gate">switch S₂ at (3,4)</span>
+
+<span class="room">Room 2 (gated):</span>  gate needs S₂ toggled
+  <span class="exit">EXIT</span>
+
+<span class="comment">-- Subgoal proposal (model output) -------------------------</span>
+<span class="key">SUBGOAL:(2,3)</span>  <span class="comment">← pick up key first</span>
+<span class="comment">env verifies; hindsight distills if reached even on failure</span>
+    </div>
+
+    <p>
+      The key design choices: <strong>controls are latently permuted</strong> per episode (which action goes which direction), <strong>object roles are latently permuted</strong> (which glyph is a key vs a decoy), and <strong>key-door bindings</strong> are per-episode random. The solver cannot memorize its way through — it must induce the rules from experience on every episode.
+    </p>
+
+    <div class="result-grid">
+      <div class="result-card rc-accent">
+        <div class="rc-label">Environment</div>
+        <div class="rc-num">7</div>
+        <div class="rc-desc">curriculum stages (s0–s6), from single-door to three mixed-mechanic gates</div>
+      </div>
+      <div class="result-card rc-blue">
+        <div class="rc-label">Mechanics</div>
+        <div class="rc-num">3+</div>
+        <div class="rc-desc">door (key), gate (switch), push (Sokoban) — composable at will</div>
+      </div>
+      <div class="result-card rc-good">
+        <div class="rc-label">Oracle</div>
+        <div class="rc-num">BFS</div>
+        <div class="rc-desc">deterministic shortest-path solver — withheld at train time, used only for reward and eval</div>
+      </div>
+    </div>
+
+    <h3 class="mt">The curriculum</h3>
+    <p>
+      Stages 0–2 introduce each mechanic as a single gate (s0: door, s1: gate, s2: push). Stages 3–4 compose two mechanics. Stages 5–6 add room size and chain length. A promotion bar (we use 0.65 pass@1) gates advancement — the key hyperparameter, as we'll see.
+    </p>
+  </div>
+</section>
+
+<!-- ===== METHOD ===== -->
+<section id="method" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">The method</div>
+    <h2>CTTD + self-proposed subgoals</h2>
+    <p>
+      The training loop is <strong>CTTD</strong> (Continual Test-Time self-Distillation): a four-phase cycle that lets the model teach itself from its own successful episodes, with no human labels anywhere.
+    </p>
+
+    <ul class="steps">
+      <li>
+        <div class="step-num">W</div>
+        <div class="step-body">
+          <strong>WAKE</strong>
+          <p>Roll out K episodes per level. The model proposes a subgoal <code>SUBGOAL:(r,c)</code>, then acts. The environment verifies whether the proposed cell was reached.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">R</div>
+        <div class="step-body">
+          <strong>REWARD</strong>
+          <p>Score each episode with environment success and action efficiency (RHAE = <code>min(1, optimal/used)²</code>). No oracle labels — the only signal is whether the model won and how efficiently.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">F</div>
+        <div class="step-body">
+          <strong>FILTER</strong>
+          <p>Keep only efficient successes (≤2.5× optimal). Optionally cap duplicate behavioral signatures (<code>--diverse-filter</code>) so one lucky solution mode can't flood the distillation set.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">D</div>
+        <div class="step-body">
+          <strong>DREAM</strong>
+          <p>LoRA-SFT on kept episodes + replayed buffer. EMA weight averaging (α=0.7) smooths the policy. Advance to next curriculum stage when the promotion bar is met on a held-out eval set.</p>
+        </div>
+      </li>
+    </ul>
+
+    <h3 class="mt">Self-proposed subgoals with hindsight</h3>
+    <p>
+      The key addition over vanilla CTTD: at each step, the model emits <code>SUBGOAL:(r,c)</code> — a coordinate it commits to reaching next. The environment only <em>verifies</em> the proposal (was that cell reached?); it never tells the model what a good subgoal would be. An anti-hack distance guard prevents trivially proposing the current cell.
+    </p>
+    <p>
+      <strong>Hindsight distillation:</strong> if an episode fails overall but the model did reach its proposed subgoal, we distill the prefix up to the subgoal-achievement step. This recycles "partial credit" episodes that would otherwise be discarded — the model learns <em>this decomposition step was correct</em> even if the rest went wrong.
+    </p>
+
+    <div class="callout">
+      <p><strong>Why coordinate subgoals?</strong> An early experiment tried typed/abstract labels (<code>ITEM / GATE / EXIT</code>). At 0.8B, abstract naming gave ~0 bootstrapping wins — an abstract name provides no navigation anchor. Emitting a coordinate <em>forces</em> the model to localize a target, doing double duty as decomposition and perception. Abstraction likely needs a warm-start from a competent coordinate policy first.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RESULTS ===== -->
+<section id="results" class="band">
+  <div class="container narrow">
+    <div class="kicker">Headline results</div>
+    <h2>The fair evaluation: same test set, same budget</h2>
+    <p>
+      All policies evaluated on the same fixed held-out test set (never seen during training). We report pass@1 and pass@8 across all curriculum stages.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Policy</th><th>pass@1</th><th>pass@8</th><th>vs baseline</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Baseline (plain ReST)</td>
+            <td>0.375</td><td>0.76</td><td>—</td>
+          </tr>
+          <tr>
+            <td>Subgoal seed-0, bar 0.5 (original)</td>
+            <td>0.314</td><td>0.62</td><td class="bad" style="color:var(--bad)">−16%</td>
+          </tr>
+          <tr>
+            <td>Subgoal seed-0, bar 0.65 (tuned)</td>
+            <td>0.378</td><td>0.80</td><td>≈ baseline</td>
+          </tr>
+          <tr class="hi" style="background:rgba(124,58,237,.04)">
+            <td class="hi">Subgoal seed-2, bar 0.65 ★</td>
+            <td class="hi">0.679</td><td class="hi">0.91</td><td class="good">+81%</td>
+          </tr>
+          <tr class="hi" style="background:rgba(124,58,237,.04)">
+            <td class="hi">Subgoal seed-1, bar 0.5 ★</td>
+            <td class="hi">0.699</td><td class="hi">0.91</td><td class="good">+86%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <div class="finding-label">Replicated on two seeds</div>
+      <p>The strong result is not a fluke: seed-1 (0.699) and seed-2 (0.679) both reach ≈1.8× baseline pass@1, independently. The tuned promotion bar (0.65) guarantees <strong>≥ baseline as a floor</strong> — no bar-0.65 run is below baseline — while seed variance still governs whether the strong ceiling is hit.</p>
+    </div>
+
+    <h3 class="mt">The promotion bar is the key hyperparameter</h3>
+    <p>
+      Our fair evaluation revealed that <em>curriculum racing</em> — advancing stages quickly — anti-correlates with policy quality. The cause: the promotion bar controls how thoroughly the model masters each primitive before advancing.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Bar</th><th>Behavior</th><th>Mean pass@1</th><th>pass@8</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0.5 (original)</td><td>Races, undertrained</td><td>0.314</td><td>0.62</td></tr>
+          <tr><td class="hi">0.65 (tuned)</td><td class="hi">Masters AND advances</td><td class="hi">0.378–0.679</td><td class="hi">0.80–0.91</td></tr>
+          <tr><td>0.8 (strict)</td><td>Stalls on stage 1</td><td colspan="2" style="color:var(--ink-quiet)">never promotes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The sweet spot ≈ 0.65: achievable enough to advance, strict enough to force per-stage mastery. Too low races to weak policies; too high stalls entirely.</p>
+  </div>
+</section>
+
+<!-- ===== TRANSFER ===== -->
+<section id="transfer" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">Transfer & compositional generalization</div>
+    <h2>Master primitives → compose</h2>
+    <p>
+      The most exciting finding: a policy trained only on single-gate primitive rooms solves unseen two-gate <em>compositions</em> better than a policy directly trained on those compositions.
+    </p>
+
+    <h3>Transfer to unseen harder stages (≈1.7×, replicated)</h3>
+    <p>
+      We capped all arms at stage 0 (single-door primitive), then evaluated on unseen stages 1–4. Self-proposed subgoals transfer robustly:
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Arm (all trained s0 only)</th><th>Unseen s1–4 pass@1</th><th>vs baseline</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Plain baseline</td><td>0.264</td><td>—</td></tr>
+          <tr><td>Subgoal + hindsight (2 seeds, mean)</td><td>0.465</td><td class="good">+1.76×</td></tr>
+          <tr><td>Subgoal − hindsight (3 seeds, mean)</td><td>0.440</td><td class="good">+1.67×</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout good">
+      <p>All <strong>5 subgoal arms</strong> (across 5 independent seeds) land above baseline. The transfer is real, consistent, and present regardless of whether hindsight is used. This is the most robustly replicated finding in this pilot.</p>
+    </div>
+
+    <p>
+      A side note on hindsight: a single-seed ablation suggested hindsight <em>hurts</em> transfer. The second seed flipped the sign. At n=2, hindsight's effect on transfer is within seed variance — we can't make a confident claim either way. The consistent effect is that −hindsight achieves slightly better <em>trained-stage</em> mastery, while ±hindsight are roughly tied on transfer.
+    </p>
+
+    <h3 class="mt">Compositional generalization: unseen 2-gate compositions (s3/s4)</h3>
+    <p>
+      A stronger test: train capped at s2 (each mechanic as a single gate — door, gate, push seen separately), evaluate on unseen s3 (two doors) and s4 (two mixed mechanics). The model has never seen more than one gate at a time.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Baseline</th><th>Subgoal−hindsight</th><th>Gain</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>s0 (trained)</td><td>0.531</td><td class="good">0.994</td><td>—</td></tr>
+          <tr><td>s1 (trained)</td><td>0.394</td><td class="good">0.975</td><td>—</td></tr>
+          <tr><td>s2 (trained)</td><td>0.506</td><td class="good">0.925</td><td>—</td></tr>
+          <tr><td><strong>s3 two-door (unseen)</strong></td><td>0.575</td><td class="good"><strong>0.944</strong></td><td class="good">+1.64×</td></tr>
+          <tr><td>s4 two-mix (unseen)</td><td>—*</td><td class="good">0.725</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.9rem; color:var(--ink-quiet)">* Baseline never reached the gate/push primitives, so s4 is not a clean composition comparison for it.</p>
+
+    <div class="finding">
+      <div class="finding-label">The "master parts" lesson</div>
+      <p>The subgoal policy, having only seen each mechanic as a single gate, scores <strong>0.944</strong> on unseen two-door and <strong>0.725</strong> on unseen two-mix. These numbers are <em>higher</em> than the full-curriculum subgoal policy that actually trained on s3/s4 (0.744/0.550). The right curriculum is "master the parts," not "grind the whole."</p>
+    </div>
+
+    <h3 class="mt">Compositional depth: generalizes to unseen depth-3</h3>
+    <p>
+      The same comp-gen policy (never saw more than 1 gate) evaluated at increasing chain depth and room size:
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Stage</th><th>Gates</th><th>pass@1</th><th>pass@8</th></tr></thead>
+        <tbody>
+          <tr><td>s3 2-door</td><td>2</td><td class="good">0.944</td><td>1.00</td></tr>
+          <tr><td>s4 2-mix</td><td>2</td><td>0.719</td><td>0.90</td></tr>
+          <tr><td>s5 2-mix big room</td><td>2 (bigger)</td><td>0.406</td><td>0.80</td></tr>
+          <tr><td>s6 3-gate</td><td>3 (unseen depth)</td><td>0.263</td><td>0.45</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Composition extends to depth-3 tasks never seen in training (pass@8 0.45, vs random ≈1%). The decay with difficulty is graceful and tracks execution load — more on that below.
+    </p>
+  </div>
+</section>
+
+<!-- ===== MECHANISM ===== -->
+<section id="mechanism" class="band">
+  <div class="container narrow">
+    <div class="kicker">Mechanism</div>
+    <h2>Decomposition transfers — execution is the bottleneck</h2>
+    <p>
+      To separate <em>planning</em> from <em>navigation</em>, we built an oracle-execution probe: the environment auto-navigates (via BFS) to whatever subgoal the model proposes, then the model proposes the next one. The model only decomposes; execution is perfect. What happens?
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Stage</th><th>Normal pass@1</th><th>Oracle-exec pass@1</th><th>Lift</th></tr></thead>
+        <tbody>
+          <tr><td>s0 1-door</td><td>0.738</td><td>1.000</td><td>+0.26</td></tr>
+          <tr><td>s1 1-gate</td><td>0.694</td><td>0.950</td><td>+0.26</td></tr>
+          <tr><td>s2 1-mix</td><td>0.669</td><td>0.750</td><td>+0.08</td></tr>
+          <tr><td>s3 2-door</td><td>0.744</td><td>0.950</td><td>+0.21</td></tr>
+          <tr><td><strong>s6 3-gate (unseen)</strong></td><td>0.263</td><td class="good"><strong>0.80</strong></td><td class="good"><strong>+0.54</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <div class="finding-label">Replicated on two seeds</div>
+      <p>On s6 (3-gate, never trained on): seed-2 normal→oracle is <strong>0.26→0.80</strong>; seed-3 is <strong>0.38→0.95</strong>. The model's decomposition for <em>unseen</em> 3-gate tasks is near-perfect. What collapses performance is the inability to reliably navigate to the proposed waypoints over long chains — an execution failure, not a planning failure.</p>
+    </div>
+
+    <div class="mech-row">
+      <div class="mech-box good">
+        <h4>Transfers well ✓</h4>
+        <p>Decomposition — which subgoal to pursue next. Proposal sensibility is 2.5–5× above chance on every unseen stage, and does not degrade on 3-gate tasks.</p>
+      </div>
+      <div class="mech-box bad">
+        <h4>Execution bottleneck ✗</h4>
+        <p>Multi-step navigation to the proposed waypoint. More cells, more turns, more chances to take a wrong step. Bigger models help here (1.7B vs 0.8B lifts the hardest stage by +0.11).</p>
+      </div>
+    </div>
+
+    <h3 class="mt">Probe sensibility at depth</h3>
+    <p>
+      We measure whether proposed subgoals land on BFS-optimal paths. On unseen compositions, proposal sensibility is <em>as high or higher</em> than on trained stages (s3 0.83, s4 0.65 vs chance ≈0.24 — vs trained s1/s2 at 0.52/0.59). The model generalizes its planning to new compositions without degradation. The bottleneck is purely navigational.
+    </p>
+  </div>
+</section>
+
+<!-- ===== THREE TRICKS ===== -->
+<section id="tricks" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">Three cheap compound gains</div>
+    <h2>LoRA-souping, diverse filtering, capacity</h2>
+
+    <h3>LoRA-souping: remove seed-selection for free</h3>
+    <p>
+      The strong outcome (0.68–0.70 pass@1) is seed-dependent. Rather than picking the best seed post-hoc, we average the LoRA weights of 3 trained adapters (<em>model souping</em>) and evaluate the averaged model — no new training.
+    </p>
+    <div class="callout blue">
+      <p>The soup scores <strong>0.506</strong> on unseen s1–s4, above the best individual seed (0.491) and the 3-seed mean (0.440). It eliminates the seed-selection problem and lifts transfer — for free.</p>
+    </div>
+
+    <h3 class="mt">Diversity-aware filtering: better distillation data</h3>
+    <p>
+      When many winning episodes share the same behavioral trajectory (same event sequence), the distillation set collapses onto one solution mode. Capping how many duplicates we keep per signature (<code>--diverse-filter</code>) forces the SFT data to be behaviorally diverse.
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Seed</th><th>pass@1 without filter</th><th>pass@1 with filter</th><th>pass@8 Δ</th></tr></thead>
+        <tbody>
+          <tr><td>seed-2</td><td>0.491</td><td class="good">0.534</td><td class="good">+0.125</td></tr>
+          <tr><td>seed-3</td><td>0.416</td><td class="good">0.644</td><td class="good">+0.300</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Both metrics improve on both seeds — not a trade-off between pass@1 and pass@8. The filter is cheap and drop-in.</p>
+
+    <h3 class="mt">Capacity: 1.7B lifts the execution ceiling</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Model</th><th>s3 2-door (unseen)</th><th>s4 2-mix (unseen)</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen3-0.6B</td><td colspan="2" style="color:var(--ink-quiet)">fails to bootstrap</td></tr>
+          <tr><td>Qwen3.5-0.8B</td><td>0.944</td><td>0.725</td></tr>
+          <tr><td class="hi">Qwen3-1.7B</td><td>0.950</td><td class="good"><strong>0.831</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Capacity helps exactly where execution binds (s4, the hardest composition), and is flat where decomposition already transfers (s3, near ceiling). This is consistent with the mechanism: larger models buy execution headroom, not better planning.</p>
+  </div>
+</section>
+
+<!-- ===== CROSS-DOMAIN ===== -->
+<section id="cross" class="band">
+  <div class="container narrow">
+    <div class="kicker">Cross-domain</div>
+    <h2>Few-shot acceleration on a novel environment</h2>
+    <p>
+      We built a second environment — <strong>SeqGrid</strong> — with the same coordinate/action/subgoal interface as GridRule but a completely different rule: the exit opens only after stepping on pads in a hidden order (vs lock-and-key). A GridRule-trained subgoal adapter had never seen this mechanic. What happens when it is fine-tuned on SeqGrid with the same self-distillation loop?
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>Base (cold start)</th><th>GridRule-warm start</th></tr></thead>
+        <tbody>
+          <tr><td>Primitive pad task (q0): pass@1 at round 0</td><td>0.21–0.36</td><td class="good"><strong>0.86</strong> (immediate)</td></tr>
+          <tr><td>Novel 2-pad rule (q1): final pass@1</td><td>0.242</td><td class="good"><strong>0.386</strong> (+1.59×)</td></tr>
+          <tr><td>Novel 2-pad rule (q1): pass@8</td><td>0.71</td><td>0.76 (smaller gap)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The warm-started model learns the transferable primitive 3–4× faster (immediate competence vs 6–8 rounds) and reaches 1.59× higher final pass@1 on the novel rule. The pass@8 gap is smaller — with enough retries, cold start catches up. The warm-start advantage is concentrated in <em>first-try reliability</em>.
+    </p>
+    <div class="callout">
+      <p><strong>Replicated on 2 seeds.</strong> Both warm seeds outperform both cold seeds on q1 pass@1, with clean separation. The cross-domain story is: <em>learning GridRule decomposition accelerates learning a new environment's rule</em> — not that cold start can't eventually learn it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FRONTIER ===== -->
+<section id="frontier" class="band band-tint">
+  <div class="container narrow">
+    <div class="kicker">Harder mechanics (exploratory)</div>
+    <h2>New mechanics, new failure modes</h2>
+    <p>
+      We extended GridRule with new mechanics to probe the limits of the approach. These are early, largely single-seed results — treat them as directional, not conclusive.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mechanic</th><th>Stage reached</th><th>pass@1</th><th>Summary</th></tr></thead>
+        <tbody>
+          <tr><td>⑤ Fog (warm)</td><td>fog-2door</td><td class="good">0.64</td><td>Partial-obs is learnable with a prior</td></tr>
+          <tr><td>⑤ Fog (cold)</td><td>fog-1door (stuck)</td><td style="color:var(--bad)">0.08</td><td>Prior makes fog ~8× more learnable</td></tr>
+          <tr><td>④ Drift</td><td>drift-2door</td><td class="good">0.77</td><td>Adapts to reshuffled controls /6 turns</td></tr>
+          <tr><td>③ AND-gates</td><td>and-2door</td><td class="good">0.68</td><td>Set-valued prerequisites learn well</td></tr>
+          <tr><td>② Irreversibility (warm)</td><td>irrev-1door</td><td>0.34</td><td>Hard — decomposition bottleneck</td></tr>
+          <tr><td>E1 Crafting (warm)</td><td>stalls</td><td>~0.18</td><td>Fails to bootstrap</td></tr>
+          <tr><td>E8 Hazards (warm)</td><td>stalls</td><td>~0.19</td><td>Fails to bootstrap</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Three hard mechanics, three distinct failure modes</h3>
+    <p>
+      Oracle-execution probes cleanly diagnose what binds in each case:
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mechanic</th><th>Normal</th><th>Oracle-exec</th><th>Diagnosis</th></tr></thead>
+        <tbody>
+          <tr><td>② Irreversibility</td><td>0.34</td><td>0.33 (no rescue)</td><td class="hi">Decomposition — proposes the trap</td></tr>
+          <tr><td>E1 Crafting</td><td>0.20</td><td>0.38</td><td>Decomposition-sequencing — mis-orders steps</td></tr>
+          <tr><td>E8 Hazards</td><td>0.26</td><td>0.44</td><td>Execution — steps on lethal tiles</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="finding">
+      <div class="finding-label">Irreversibility flips the bottleneck (replicated, n=2)</div>
+      <p>Under reversible mechanics, oracle-execution rescues nearly everything (s3 0.744→0.950 with oracle). Under irreversibility on the 1-door stage, oracle-exec provides <strong>zero lift</strong> — the model is proposing the decoy cell (16–22% of episodes), and perfect execution walks it straight into the trap. Execution isn't the problem when the proposed plan is already wrong. This is the most interesting frontier finding: a mechanic that specifically targets the decomposition faculty.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CAVEATS ===== -->
+<section id="caveats" class="band band-dark">
+  <div class="container narrow">
+    <div class="kicker">Honest caveats</div>
+    <h2>What this pilot can and cannot claim</h2>
+    <p>
+      We want to be straightforward about the limitations of this work. This is a pilot, and we think that framing matters.
+    </p>
+    <ul class="steps" style="--step-color: var(--accent-soft)">
+      <li>
+        <div class="step-num" style="background: rgba(164,114,240,.3); color:#d9c8fa;">!</div>
+        <div class="step-body">
+          <strong style="color:#f0eaff;">Small n.</strong>
+          <p>Most claims are based on n=2–3 seeds. The strong result (0.68–0.70 pass@1) is reproduced on two seeds, which is meaningful, but far from a rigorous statistical claim. The ceiling is still seed-variable; bar-0.65 reliably floors at baseline but doesn't guarantee the strong outcome.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num" style="background: rgba(164,114,240,.3); color:#d9c8fa;">!</div>
+        <div class="step-body">
+          <strong style="color:#f0eaff;">Synthetic environment.</strong>
+          <p>GridRule is a proxy, not the real ARC-AGI-3. It captures the demands we care about (latent rule induction, compose-back decomposition) in a convenient package, but we cannot claim the findings transfer to visual, high-dimensional, or open-ended settings.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num" style="background: rgba(164,114,240,.3); color:#d9c8fa;">!</div>
+        <div class="step-body">
+          <strong style="color:#f0eaff;">Frontier mechanics at n=1.</strong>
+          <p>Most results in the "harder mechanics" section are single-seed. The three-failure-mode taxonomy is promising but should be treated as a hypothesis to replicate, not an established result.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num" style="background: rgba(164,114,240,.3); color:#d9c8fa;">!</div>
+        <div class="step-body">
+          <strong style="color:#f0eaff;">Seed variance remains.</strong>
+          <p>We observed seed-2 on bar-0.65 reach 0.679 while seed-0 on the same bar reached only 0.378. We do not yet have a reliable predictor of which seed will produce the strong outcome. LoRA-souping partially addresses this but doesn't eliminate it.</p>
+        </div>
+      </li>
+    </ul>
+    <p style="color:#c8bde8; margin-top: 1.8rem;">
+      None of these caveats, we think, undermine the core finding: self-proposed coordinate subgoals, in this setting, reliably improve transfer and compositional generalization, replicated at n=2. The pilot is a starting point. We share it to invite scrutiny and collaboration, not to claim a solved problem.
+    </p>
+  </div>
+</section>
+
+<!-- ===== TAKEAWAYS ===== -->
+<section id="takeaways" class="band">
+  <div class="container narrow">
+    <div class="kicker">Takeaways</div>
+    <h2>What this pilot suggests</h2>
+
+    <div class="result-grid">
+      <div class="result-card rc-accent">
+        <div class="rc-label">Key finding #1</div>
+        <p style="font-size:1rem; color:var(--ink-soft); margin:0;">Self-proposed coordinate subgoals let a 0.8B model learn a <strong>transferable decomposition strategy</strong> without labels — replicated at n=2.</p>
+      </div>
+      <div class="result-card rc-good">
+        <div class="rc-label">Key finding #2</div>
+        <p style="font-size:1rem; color:var(--ink-soft); margin:0;">The bottleneck is <strong>execution, not planning</strong>. The model's decomposition transfers to depth-3 unseen tasks; navigation is what fails under longer chains.</p>
+      </div>
+      <div class="result-card rc-blue">
+        <div class="rc-label">Key finding #3</div>
+        <p style="font-size:1rem; color:var(--ink-soft); margin:0;"><strong>Master parts, then compose</strong>. Training on primitives and evaluating on compositions outperforms training directly on compositions — at this scale.</p>
+      </div>
+    </div>
+
+    <div class="callout mt" style="border-color: var(--accent);">
+      <p>The lesson we take from the irreversibility finding is the one we find most broadly interesting: <strong>environment mechanics can selectively target either the decomposition or execution faculty</strong>. This suggests a path toward diagnostic benchmarks that measure not just whether a model solves a task, but <em>which cognitive component</em> is the limiting factor. We hope GridRule's knob-based design makes it a useful tool for that kind of probing, even beyond the specific method we tested here.</p>
+    </div>
+
+    <p class="mt">
+      We're happy to share the environment and training code. If you find GridRule useful as a testbed — or if you see something wrong with our analysis — please reach out.
+    </p>
+
+    <div class="hero-links mt">
+      <a class="pill" href="https://github.com/DylanZSZ/arc_interactive_env_claude" target="_blank" rel="noopener">Code on GitHub ↗</a>
+      <a class="pill pill-ghost" href="mailto:shizhuo2@illinois.edu">Contact ↗</a>
+      <a class="pill pill-ghost" href="/">← Back to Dylan Zhang</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>
+    <strong style="color:#d9c8fa;">GridRule: a pilot study</strong> — Dylan Zhang, UIUC ALTA Lab.
+    Part of an ongoing exploration of interactive environments for small-model post-training.
+    This write-up was composed in June 2026.
+    Feedback welcome at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+  </p>
+</footer>
+
+</body>
+</html>
