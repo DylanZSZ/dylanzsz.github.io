@@ -50,7 +50,6 @@
     </aside>
 
     <div class="hero-links">
-      <a class="pill" href="https://github.com/DylanZSZ/arc_interactive_env_claude" target="_blank" rel="noopener">Code ↗</a>
       <a class="pill pill-ghost" href="#demo">▶ Try the demo ↓</a>
       <a class="pill pill-ghost" href="#results">Jump to results ↓</a>
       <a class="pill pill-ghost" href="/">← Dylan Zhang</a>
@@ -175,11 +174,6 @@
     <p class="mt">
       The key design choices: <strong>controls are latently permuted</strong> per episode (you saw this in the demo above), <strong>object roles are latently permuted</strong> (which glyph is a key vs decoy), and <strong>key-door bindings</strong> are random each episode. Nothing is memorizable — the solver must induce rules from experience every time.
     </p>
-
-    <figure class="fig mt">
-      <img src="figures/stage_progress.png" alt="Stage progression over training" loading="lazy">
-      <figcaption><strong>Stage progression over training rounds.</strong> Each advance requires reaching the promotion bar (0.65 pass@1) on a held-out eval set. Faster promotion correlates with weaker final policies — the key lesson behind the bar tuning.</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -223,11 +217,6 @@
       </li>
     </ul>
 
-    <figure class="fig mt">
-      <img src="figures/stability_compare.png" alt="Stability comparison: EMA vs no-EMA" loading="lazy">
-      <figcaption><strong>Training stability.</strong> EMA(0.7) weight averaging produces smooth, monotonic improvement. No-EMA is erratic; EMA(0.9) over-smooths and flattens. The current config is near-optimal.</figcaption>
-    </figure>
-
     <h3 class="mt">Hindsight distillation</h3>
     <p>
       If an episode fails overall but the model did reach its proposed subgoal, we distill the prefix up to subgoal-achievement. This recycles "partial credit" episodes — the model learns <em>this decomposition step was correct</em> even if the rest went wrong.
@@ -237,10 +226,6 @@
       <p><strong>Why coordinate subgoals?</strong> Typed abstract labels (<code>ITEM / GATE / EXIT</code>) gave ~0 bootstrapping at 0.8B — abstract names provide no navigation anchor. Emitting a coordinate <em>forces</em> the model to localize a target, doing double duty as decomposition and perception anchor.</p>
     </div>
 
-    <figure class="fig">
-      <img src="figures/ab_compare.png" alt="Quality filter ablation" loading="lazy">
-      <figcaption><strong>Quality filter is essential.</strong> Distilling ALL successes self-poisons the model (reinforces lucky meandering). Keeping only efficient ones (≤2.5× optimal) allows genuine skill learning.</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -277,11 +262,6 @@
       <div class="finding-label">Replicated on two seeds</div>
       <p>Seed-1 (0.699) and seed-2 (0.679) both reach ≈1.8× baseline pass@1, independently. The tuned promotion bar (0.65) guarantees <strong>≥ baseline as a floor</strong>. Seed variance governs whether the strong ceiling is hit.</p>
     </div>
-
-    <figure class="fig">
-      <img src="figures/subgoal_compare.png" alt="Subgoal vs baseline per stage" loading="lazy">
-      <figcaption><strong>Subgoal vs baseline per stage.</strong> On most stages the best subgoal seeds are substantially ahead. The gap is largest on the harder composition stages (s3, s4).</figcaption>
-    </figure>
 
     <h3 class="mt">The promotion bar is the key hyperparameter</h3>
     <p>
@@ -329,11 +309,6 @@
     <div class="callout good">
       <p>All <strong>5 subgoal arms</strong> across 5 independent seeds land above baseline. This is the most robustly replicated finding in this pilot.</p>
     </div>
-
-    <figure class="fig">
-      <img src="figures/multiseed_compare.png" alt="Multi-seed comparison: transfer results" loading="lazy">
-      <figcaption><strong>Multi-seed transfer comparison.</strong> Individual seeds show variance in the ceiling, but every subgoal arm outperforms the baseline — there is no seed for which the subgoal approach underperforms.</figcaption>
-    </figure>
 
     <h3 class="mt">Compositional depth: extends to unseen depth-3</h3>
     <p>
@@ -396,10 +371,6 @@
       </div>
     </div>
 
-    <figure class="fig">
-      <img src="figures/curves.png" alt="Training curves: pass@1 over rounds" loading="lazy">
-      <figcaption><strong>Training curves.</strong> pass@1 on per-current-stage eval over training rounds. Subgoal arms ramp up faster on each stage they train on — the key advantage is in sample efficiency at the per-stage level.</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -553,8 +524,7 @@
     </div>
 
     <div class="hero-links mt">
-      <a class="pill" href="https://github.com/DylanZSZ/arc_interactive_env_claude" target="_blank" rel="noopener">Code on GitHub ↗</a>
-      <a class="pill pill-ghost" href="mailto:shizhuo2@illinois.edu">Contact ↗</a>
+      <a class="pill" href="mailto:shizhuo2@illinois.edu">Discussion welcome ↗</a>
       <a class="pill pill-ghost" href="/">← Back to Dylan Zhang</a>
     </div>
   </div>
@@ -566,7 +536,7 @@
   <p>
     <strong style="color:#d9c8fa;">GridRule: a pilot study</strong> — Dylan Zhang, UIUC ALTA Lab, June 2026.
     Part of an ongoing exploration of interactive environments for small-model post-training.
-    Feedback welcome at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+    Discussion very welcome — <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
   </p>
 </footer>
 
