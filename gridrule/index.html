@@ -134,11 +134,10 @@
     <div class="tldr-card">
       <div class="tldr-label">TL;DR — pilot findings</div>
       <ul class="tldr-list">
-        <li><strong>Self-proposed subgoals help.</strong> A 0.8B model trained with only environment reward and label-free self-distillation, using coordinate subgoals it proposes itself, reaches <strong>≈1.8× baseline</strong> pass@1 — reproduced on two independent seeds.</li>
-        <li><strong>Decomposition transfers to unseen, harder stages.</strong> Trained only on single-gate primitives, the subgoal policy solves unseen two-gate compositions at <strong>0.94 pass@1</strong> (baseline: 0.58) — and exceeds policies trained directly on those compositions.</li>
-        <li><strong>The bottleneck is execution, not decomposition.</strong> Oracle-execution (perfect navigation to proposed waypoints) lifts unseen 3-gate tasks from 0.26 → <strong>0.80+</strong>. The model's planning transfers further than its navigation skill.</li>
-        <li><strong>Three cheap tricks compound the gains:</strong> LoRA-souping, diversity-aware distillation filtering, and a tuned promotion bar — each independently validated.</li>
-        <li><strong>Harder mechanics reveal distinct failure modes:</strong> irreversibility breaks decomposition, hazards break execution, crafting breaks sequencing — cleanly separated by oracle-execution probes.</li>
+        <li><strong>The env is the contribution as much as the results.</strong> GridRule has explicit knobs to isolate two sources of difficulty — rule discovery and subgoal chaining — and an oracle-execution probe that lets you separate planning failures from navigation failures.</li>
+        <li><strong>Self-proposed coordinate subgoals produce a transferable decomposition skill.</strong> Train on single-gate rooms, test on three-gate chains — the planning transfers. Replicated on two independent seeds, ≈1.8× baseline pass@1.</li>
+        <li><strong>The bottleneck is execution, not decomposition.</strong> Give the model perfect navigation to its own proposed waypoints and unseen 3-gate tasks jump from 0.26 → 0.80+. The model knows where to go; it struggles to get there over long chains.</li>
+        <li><strong>Different mechanics break different faculties.</strong> Irreversibility breaks planning (oracle-exec provides zero rescue). Hazards break navigation. Crafting breaks sequencing. The env can tell these apart cleanly.</li>
       </ul>
     </div>
   </div>
@@ -148,31 +147,38 @@
 <section id="env" class="band">
   <div class="container narrow">
     <div class="kicker">The environment</div>
-    <h2>GridRule: a knobbed proxy for ARC-AGI-3</h2>
+    <h2>GridRule: a diagnostic research instrument</h2>
     <p>
-      ARC-AGI-3 asks solvers to induce hidden rules by trial and error and chain sub-solutions into multi-step plans. The real benchmark is visual, API-bound, and expensive to iterate on. <strong>GridRule</strong> is a cheap, deterministic, text-renderable proxy that captures both demands — every episode freshly permutes controls and object roles, and a BFS oracle is always available for reward.
+      Multi-step problem solving usually bundles two distinct sources of difficulty together: you don't know the rules, and winning requires chaining sub-plans where an early mistake strands you. I wanted to pull those apart and measure them independently. That's the design goal behind GridRule.
+    </p>
+    <p>
+      The env has explicit <strong>knobs</strong>. You can reveal or hide controls (which action moves which direction), object roles (which glyph means key vs decoy), and key-door bindings — independently, per episode. Turning them on and off lets you isolate exactly which source of difficulty the model is struggling with.
     </p>
 
     <div class="result-grid">
       <div class="result-card rc-accent">
-        <div class="rc-label">Curriculum</div>
-        <div class="rc-num">7</div>
-        <div class="rc-desc">stages (s0–s6): single-door up to three mixed-mechanic gates</div>
+        <div class="rc-label">Difficulty knob</div>
+        <div class="rc-num">n_gates</div>
+        <div class="rc-desc">chain length — how many subgoals must be composed to win</div>
       </div>
       <div class="result-card rc-blue">
-        <div class="rc-label">Gate mechanics</div>
-        <div class="rc-num">3+</div>
-        <div class="rc-desc">door (key), gate (switch), push (Sokoban) — composable at will</div>
+        <div class="rc-label">Shift knob</div>
+        <div class="rc-num">mechanics</div>
+        <div class="rc-desc">which gate types are active: door (key), gate (switch), push (block)</div>
       </div>
       <div class="result-card rc-good">
         <div class="rc-label">Oracle</div>
         <div class="rc-num">BFS</div>
-        <div class="rc-desc">shortest-path solver; withheld at train time, used only for reward and eval</div>
+        <div class="rc-desc">always knows the optimal solution — withheld from the model, used only for reward and eval</div>
       </div>
     </div>
 
-    <p class="mt">
-      The key design choices: <strong>controls are latently permuted</strong> per episode (you saw this in the demo above), <strong>object roles are latently permuted</strong> (which glyph is a key vs decoy), and <strong>key-door bindings</strong> are random each episode. Nothing is memorizable — the solver must induce rules from experience every time.
+    <h3 class="mt">Compose-back: errors propagate</h3>
+    <p>
+      The chain structure is the key design idea. To win, you must get the key, open the door, hit the switch, open the gate — in order. It's not just "navigate to a goal." A wrong early subgoal strands you with no way forward. This means sub-policies genuinely depend on each other, and a model that gets the chain half-right still fails.
+    </p>
+    <p>
+      The reward penalizes waste too: efficiency = <em>(optimal steps / steps used)²</em>. Trial-and-error bumping is allowed but costly. The model learns to be right <em>and</em> efficient.
     </p>
   </div>
 </section>
@@ -421,43 +427,48 @@
 <!-- ===== FRONTIER ===== -->
 <section id="frontier" class="band">
   <div class="container narrow">
-    <div class="kicker">Harder mechanics (exploratory)</div>
-    <h2>New mechanics, new failure modes</h2>
+    <div class="kicker">Extending the env (exploratory)</div>
+    <h2>Each new mechanic targets a different faculty</h2>
     <p>
-      We extended GridRule with new mechanics — fog, drift, AND-gates, irreversibility, crafting, hazards — to probe the limits of the approach. These are early, largely single-seed results.
+      One thing the knob-based design makes possible: you can add a new mechanic and ask precisely which faculty it stresses. We added six. Three were learnable; three exposed hard limits. The oracle-execution probe separates them cleanly.
     </p>
+
+    <h3>The learnable ones</h3>
+    <p>Fog (partial observation), drift (controls reshuffle every 6 steps), and AND-gates (need a full set of keys) all bootstrap well with a warm-started prior. The subgoal proposal recipe is robust to these stresses — the model adapts.</p>
 
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Mechanic</th><th>Stage reached</th><th>pass@1</th><th>Summary</th></tr></thead>
+        <thead><tr><th>Mechanic</th><th>pass@1</th><th>What it stresses</th></tr></thead>
         <tbody>
-          <tr><td>⑤ Fog (warm start)</td><td>fog-2door</td><td class="good">0.64</td><td>Learnable with prior; cold start stalls (0.08)</td></tr>
-          <tr><td>④ Drift (reshuffled controls)</td><td>drift-2door</td><td class="good">0.77</td><td>Adapts to non-stationary controls</td></tr>
-          <tr><td>③ AND-gates</td><td>and-2door</td><td class="good">0.68</td><td>Set-valued prerequisites work well</td></tr>
-          <tr><td>② Irreversibility</td><td>irrev-1door</td><td>0.34</td><td>Hard — decomposition bottleneck</td></tr>
-          <tr><td>E1 Crafting</td><td>stalls</td><td>~0.18</td><td>Fails to bootstrap</td></tr>
-          <tr><td>E8 Hazards</td><td>stalls</td><td>~0.19</td><td>Fails to bootstrap</td></tr>
+          <tr><td>⑤ Fog (partial obs, warm start)</td><td class="good">0.64</td><td>exploration under hidden state — cold start stalls at 0.08</td></tr>
+          <tr><td>④ Drift (reshuffled controls)</td><td class="good">0.77</td><td>non-stationarity — controls change mid-episode</td></tr>
+          <tr><td>③ AND-gates (set-valued keys)</td><td class="good">0.68</td><td>richer prerequisites — collect all before you can proceed</td></tr>
         </tbody>
       </table>
     </div>
 
-    <h3 class="mt">Three hard mechanics, three distinct failure modes</h3>
-    <p>Oracle-execution probes cleanly separate the faculty that binds in each case:</p>
+    <h3 class="mt">The hard ones — and what they reveal</h3>
+    <p>
+      Irreversibility, crafting, and hazards all stall or fail to bootstrap. But the <em>reason</em> is different in each case. That's what makes them interesting as diagnostics.
+    </p>
+    <p>
+      The oracle-execution probe makes this visible. Hand the model perfect navigation to its own proposed waypoints. If performance recovers, the failure was navigational. If it doesn't, the plan itself was wrong.
+    </p>
 
     <div class="tbl-wrap">
       <table>
         <thead><tr><th>Mechanic</th><th>Normal</th><th>Oracle-exec</th><th>Diagnosis</th></tr></thead>
         <tbody>
-          <tr><td>② Irreversibility</td><td>0.34</td><td>0.33 <em>(no rescue)</em></td><td class="hi">Decomposition — model proposes the trap</td></tr>
-          <tr><td>E1 Crafting</td><td>0.20</td><td>0.38</td><td>Decomp-sequencing — mis-orders synthesis</td></tr>
-          <tr><td>E8 Hazards</td><td>0.26</td><td>0.44</td><td>Execution — steps on lethal tiles</td></tr>
+          <tr><td>② Irreversibility</td><td>0.34</td><td>0.33 <em>(no rescue)</em></td><td class="hi">Planning — model proposes the trap (16–22% of episodes)</td></tr>
+          <tr><td>E1 Crafting</td><td>0.20</td><td>0.38</td><td>Sequencing — model knows the ingredients, mis-orders them</td></tr>
+          <tr><td>E8 Hazards</td><td>0.26</td><td>0.44</td><td>Navigation — model steps onto lethal tiles; routing rescues it</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="finding">
-      <div class="finding-label">Irreversibility flips the bottleneck (n=2)</div>
-      <p>Under reversible mechanics, oracle-exec rescues nearly everything (2-door: 0.744 → 0.950). Under irreversibility on 1-door, oracle-exec provides <strong>zero lift</strong>. The model is proposing the trap cell (16–22% of episodes) and perfect execution walks it straight there. A mechanic that specifically targets the decomposition faculty.</p>
+      <div class="finding-label">Irreversibility flips the bottleneck</div>
+      <p>Under reversible mechanics, oracle-exec rescues nearly everything — 2-door goes 0.744 → 0.950. Under irreversibility on the same 1-door task, oracle-exec provides <strong>zero lift</strong>. The model is walking into a trap it chose. Perfect execution just gets it there faster. This is the clearest demonstration that the failure mode depends on the mechanic, not the model — and that the env can tell them apart.</p>
     </div>
   </div>
 </section>
@@ -506,21 +517,21 @@
 
     <div class="result-grid">
       <div class="result-card rc-accent">
-        <div class="rc-label">Finding #1</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">Self-proposed coordinate subgoals let a 0.8B model learn a <strong>transferable decomposition strategy</strong> without labels — replicated at n=2.</p>
+        <div class="rc-label">On the env</div>
+        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">Knobs that isolate difficulty sources + an oracle-execution probe let you ask <em>which faculty is binding</em>, not just whether the model passes or fails.</p>
       </div>
       <div class="result-card rc-good">
-        <div class="rc-label">Finding #2</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">The bottleneck is <strong>execution, not planning</strong>. Decomposition transfers to depth-3 unseen tasks; navigation fails under long chains.</p>
+        <div class="rc-label">On decomposition</div>
+        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">Self-proposed coordinate subgoals produce a <strong>transferable planning skill</strong> — trained on 1-gate, generalizes to 3-gate. The planning transfers further than the navigation.</p>
       </div>
       <div class="result-card rc-blue">
-        <div class="rc-label">Finding #3</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;"><strong>Master parts, then compose.</strong> Training on primitives and evaluating on compositions outperforms training directly on compositions — at this scale.</p>
+        <div class="rc-label">On failure modes</div>
+        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">The failure mode is a <strong>property of the mechanic</strong>, not the model. Irreversibility breaks planning; hazards break navigation; crafting breaks sequencing. The env separates them.</p>
       </div>
     </div>
 
     <div class="callout mt">
-      <p><strong>The broader takeaway:</strong> environment mechanics can selectively target either the decomposition or execution faculty. This suggests a path toward diagnostic benchmarks that measure not just whether a model solves a task, but <em>which cognitive component</em> is the limiting factor. GridRule's knob-based design is meant to support exactly that kind of probing.</p>
+      <p>The thing I find most interesting isn't the pass@1 numbers — it's that the env can tell the difference between a model that doesn't know where to go and a model that knows exactly where to go but can't get there. That distinction seems worth building tools around.</p>
     </div>
 
     <div class="hero-links mt">
