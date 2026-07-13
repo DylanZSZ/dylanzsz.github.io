@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="Internal collaborator playground for the FrontierGrid research environment.">
+  <meta name="theme-color" content="#0b1020">
+  <title>GridRule dev · FrontierGrid playground</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#playground">Skip to the playground</a>
+
+  <header class="topbar">
+    <a class="brand" href="../gridrule/" aria-label="Back to the public GridRule research page">
+      <span class="brand-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>GridRule / dev</span>
+    </a>
+    <div class="internal-flag"><span aria-hidden="true"></span> Internal research playground</div>
+    <nav aria-label="Related GridRule pages">
+      <a href="../gridrule/environment.html">Design explainer</a>
+      <a href="../gridrule/">Findings</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Collaborator sandbox · July 2026</p>
+        <h1 id="page-title">Can you wait for the <em>disconfirming</em> evidence?</h1>
+        <p class="lede">Play one faithful FrontierGrid episode, inspect why a run became unwinnable, then turn the failure into a sharper environment idea.</p>
+      </div>
+      <aside class="scope-note">
+        <strong>Toy browser simulation—not an evaluation result.</strong>
+        <p>This page is intentionally unlinked and marked <code>noindex</code>, but its GitHub Pages URL is still public. Do not put private notes here.</p>
+      </aside>
+    </section>
+
+    <section class="playground" id="playground" aria-labelledby="play-title">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">01 · Play the decision boundary</p>
+          <h2 id="play-title">FrontierGrid, one compact episode</h2>
+        </div>
+        <p>Step on both <strong>?</strong> panels, collect exactly the two valid items, and reach <strong>★</strong>. Pickups are permanent. A plausible shortcut can destroy the run.</p>
+      </div>
+
+      <div class="config-strip" aria-label="Episode configuration">
+        <label>
+          <span>Evidence regime</span>
+          <select id="clue-mode">
+            <option value="false-proof" selected>Claim → counterexample</option>
+            <option value="relational">Relational</option>
+            <option value="direct">Direct coordinates</option>
+          </select>
+        </label>
+        <label>
+          <span>Action binding</span>
+          <select id="control-mode">
+            <option value="geographic" selected>Geographic arrows</option>
+            <option value="visible">Shuffled A1–A5 · shown</option>
+            <option value="hidden">Shuffled A1–A5 · discover</option>
+          </select>
+        </label>
+        <label>
+          <span>Orientation</span>
+          <select id="orientation">
+            <option value="fixed" selected>Fixed</option>
+            <option value="horizontal">Mirror left ↔ right</option>
+            <option value="vertical">Mirror top ↔ bottom</option>
+            <option value="both">Rotate 180°</option>
+          </select>
+        </label>
+        <label>
+          <span>Action budget</span>
+          <select id="budget">
+            <option value="20" selected>20 · tight</option>
+            <option value="24">24 · forgiving</option>
+            <option value="0">Unlimited</option>
+          </select>
+        </label>
+        <button class="button secondary" id="reset" type="button">Reset episode</button>
+        <button class="button ghost" id="remix" type="button">Remix bindings</button>
+      </div>
+
+      <p class="episode-prompt" id="episode-prompt"><span>Current challenge</span> Resist the visible shortcut proof until you have checked its counterexample.</p>
+
+      <div class="play-layout">
+        <div class="game-card">
+          <div class="game-topline">
+            <div>
+              <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+              <strong id="episode-status">Episode active</strong>
+            </div>
+            <div class="counter"><span id="action-count">0</span><small id="budget-label"> / 20 actions</small></div>
+          </div>
+
+          <div class="board-shell" id="board-shell">
+            <div class="board-frame">
+              <span class="axis-corner" aria-hidden="true">r,c</span>
+              <div class="column-axis" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span></div>
+              <div class="row-axis" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+              <div class="board" id="board" role="img" tabindex="0" aria-describedby="board-text" aria-label="FrontierGrid board. Coordinates are zero-indexed row, column. Use the controls below or the keyboard to move."></div>
+            </div>
+          </div>
+          <p class="sr-only" id="board-text"></p>
+
+          <div class="legend" aria-label="Map legend">
+            <span><b class="legend-agent">●</b> agent</span>
+            <span><b>?</b> evidence</span>
+            <span><b>◆</b> unknown item</span>
+            <span><b>◇</b> portal</span>
+            <span><b>▥</b> gate</span>
+            <span><b>★</b> exit</span>
+            <span><b>r,c</b> zero-indexed coordinate</span>
+          </div>
+
+          <div class="binding-panel" id="binding-panel" aria-live="polite"></div>
+          <div class="actions" id="actions" aria-label="Episode actions"></div>
+          <p class="keyboard-hint" id="keyboard-hint">Keyboard: arrows or W/A/S/D to move · Space to wait</p>
+        </div>
+
+        <aside class="console-card" aria-label="Episode notebook">
+          <div class="console-section inventory-section">
+            <div class="console-heading">
+              <h3>Irreversible inventory</h3>
+              <span id="inventory-validity" class="validity neutral">empty</span>
+            </div>
+            <div class="inventory" id="inventory"><span class="empty-state">Nothing collected</span></div>
+          </div>
+
+          <div class="console-section">
+            <div class="console-heading">
+              <h3>Evidence ledger</h3>
+              <span id="evidence-count">0 / 2 facts</span>
+            </div>
+            <ol class="evidence-list" id="evidence-list">
+              <li class="empty-state">Step on a ? panel to record a fact.</li>
+            </ol>
+          </div>
+
+          <div class="console-section overlay-section">
+            <label class="toggle">
+              <input id="overlay" type="checkbox">
+              <span class="toggle-track" aria-hidden="true"><i></i></span>
+              <span><strong>Research overlay</strong><small>Reveal roles, oracle path, and diagnostics</small></span>
+            </label>
+            <div class="diagnostics" id="diagnostics" hidden>
+              <dl>
+                <div><dt>Structurally solvable?</dt><dd id="diag-solvable">—</dd></div>
+                <div><dt>Optimal remaining</dt><dd id="diag-optimal">—</dd></div>
+                <div><dt>Within budget?</dt><dd id="diag-budget">—</dd></div>
+                <div><dt>RHAE on win</dt><dd id="diag-rhae">—</dd></div>
+              </dl>
+              <div class="trace-wrap">
+                <span>Trace labels</span>
+                <div class="trace-labels" id="trace-labels"><i>none yet</i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="console-section log-section">
+            <div class="console-heading">
+              <h3>Event trace</h3>
+              <button class="text-button" id="clear-log" type="button">Clear view</button>
+            </div>
+            <ol class="event-log" id="event-log" aria-live="polite"></ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="directions" id="directions" aria-labelledby="directions-title">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">02 · Turn play into a research direction</p>
+          <h2 id="directions-title">What should the next failure isolate?</h2>
+        </div>
+        <p>These cards are <strong>design directions—not mechanics in the current generator</strong>. Each keeps the focus on a shortcut, the evidence that defeats it, and a matched rescue.</p>
+      </div>
+
+      <aside class="research-handoff" aria-label="Current ContractForge research handoff">
+        <div>
+          <span>Current handoff · ContractForge</span>
+          <strong>Open patch generation is now a finding, not the next task.</strong>
+          <p>The immediate question is whether certified-versus-invalid patch lessons transfer across fresh targets.</p>
+        </div>
+        <dl>
+          <div><dt>0 / 8</dt><dd>valid one-shot open patches</dd></div>
+          <div><dt>5 / 8 <small>vs 1 / 8</small></dt><dd>typed vs generic repair</dd></div>
+          <div><dt>800 / 800</dt><dd>certified invariant-gated searches</dd></div>
+        </dl>
+        <p>Mechanism diagnostics: repair is small-N; exact search assumes a finite patch DSL, correct hypotheses, and trusted invariants. Outcome-only search certified 0 / 800.</p>
+      </aside>
+
+      <div class="direction-layout">
+        <div class="seed-list" role="group" aria-label="Direction seeds">
+          <button class="seed active" type="button" data-direction="experiment-ledger" aria-pressed="true">
+            <span>ContractForge · next rung</span><strong>Experiment-policy ledger</strong><small>Can patch lessons transfer to fresh targets?</small>
+          </button>
+          <button class="seed" type="button" data-direction="costed-counterexample" aria-pressed="false">
+            <span>FrontierGrid · next rung</span><strong>Costed counterexample</strong><small>Does evidence survive a real price?</small>
+          </button>
+          <button class="seed" type="button" data-direction="helpful-poison" aria-pressed="false">
+            <span>FrontierGrid · concept</span><strong>Helpful poison</strong><small>Useful now, fatal at the exact gate.</small>
+          </button>
+          <button class="seed" type="button" data-direction="untrusted-certificate" aria-pressed="false">
+            <span>ContractForge · concept</span><strong>Untrusted certificate</strong><small>Reject decisive but confounded records.</small>
+          </button>
+          <button class="seed" type="button" data-direction="shared-budget" aria-pressed="false">
+            <span>ContractForge · concept</span><strong>Shared experiment budget</strong><small>Choose which uncertain node to test.</small>
+          </button>
+        </div>
+
+        <article class="direction-card" id="direction-card">
+          <div class="direction-card-head">
+            <div>
+              <span class="concept-tag">Direction · not in current generator</span>
+              <h3 id="direction-name">Experiment-policy ledger</h3>
+              <p id="direction-hypothesis"></p>
+            </div>
+            <div class="card-actions">
+              <button class="button secondary" id="random-direction" type="button">Random direction</button>
+              <button class="button primary" id="copy-direction" type="button">Copy Markdown</button>
+            </div>
+          </div>
+          <dl class="rubric" id="direction-rubric"></dl>
+          <div class="gate-checks" id="gate-checks"></div>
+        </article>
+      </div>
+
+      <div class="scratchpad-card">
+        <div>
+          <p class="eyebrow">Local scratchpad</p>
+          <h3>What did the playthrough make you want to test?</h3>
+          <p>Saved only in this browser. It is not uploaded or included in shared links.</p>
+        </div>
+        <label class="sr-only" for="scratchpad">Collaborator scratchpad</label>
+        <textarea id="scratchpad" rows="6" placeholder="Example: Put the counterexample two moves off the safe route, then compare against an equally long irrelevant detour…"></textarea>
+        <div class="scratchpad-foot"><span id="save-status">Local only</span><button class="text-button" id="clear-notes" type="button">Clear notes</button></div>
+      </div>
+    </section>
+
+    <section class="boundary" aria-labelledby="boundary-title">
+      <p class="eyebrow">03 · Honest boundary</p>
+      <h2 id="boundary-title">What is faithful, and what is simplified?</h2>
+      <div class="boundary-grid">
+        <article>
+          <span class="boundary-kicker implemented">Faithful transition logic</span>
+          <h3>The decision is real.</h3>
+          <p>The 7×15 topology, automatic permanent pickups, portal jumps, bad-portal failure, wrong-proof trap, exact inventory gate, three clue regimes, and 16-action no-clue oracle route match the implemented FrontierGrid instance.</p>
+        </article>
+        <article>
+          <span class="boundary-kicker simplified">Collaborator simplifications</span>
+          <h3>The wrapper is for thinking.</h3>
+          <p>This browser port uses a fixed seed, visible buttons, optional semantic overlay, live BFS, and an adjustable evaluation budget. It does not invoke a model or reproduce the benchmark runner.</p>
+        </article>
+        <article>
+          <span class="boundary-kicker speculative">Backlog directions</span>
+          <h3>The cards are proposals.</h3>
+          <p>Costed evidence, helpful poison, cross-case experiment ledgers, untrusted certificates, and shared intervention budgets are prompts for matched experiments. They are deliberately separate from the playable state.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>GridRule dev</strong> · collaborator instrument · no analytics · no backend</p>
+    <p><a href="../gridrule/environment.html">Public design explainer</a> · <a href="../gridrule/">Current findings</a></p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
