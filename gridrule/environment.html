@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive explanation of the current GridRule, FrontierGrid, ContractForge, and Credit-DAG research designs.">
+  <meta name="theme-color" content="#101328">
+  <title>Environment design · GridRule research</title>
+  <meta property="og:title" content="Interactive environment design · GridRule research">
+  <meta property="og:description" content="Explore GridRule, FrontierGrid, ContractForge, and Credit-DAG as interactive diagnostic instruments.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dylanzsz.github.io/gridrule/environment.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,650;8..60,750&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="environment.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the explainer</a>
+
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="GridRule findings">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>GridRule research</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Current findings</a>
+      <a href="#commitment-lab">Commitment lab</a>
+      <a href="#credit-lab">Credit lab</a>
+      <a href="/">Dylan Zhang</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Environment design · current research snapshot</p>
+        <h1 id="page-title">Hard reasoning comes from <em>commitments</em>, not a bigger map.</h1>
+        <p class="hero-lede">The research now spans four connected instruments: GridRule isolates latent rules and compositional control; FrontierGrid tests evidence-before-action; ContractForge turns causal uncertainty into a legal experiment; Credit-DAG asks which earlier decision actually caused the outcome.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#designs">Compare the designs</a>
+          <a class="button secondary" href="#commitment-lab">Run the explainer</a>
+        </div>
+      </div>
+      <aside class="scope-card" aria-label="Scope note">
+        <span class="status-dot" aria-hidden="true"></span>
+        <p class="scope-label">What you are using</p>
+        <p><strong>A conceptual, deterministic explainer</strong> of the research mechanisms—not the benchmark runner and not a model evaluation.</p>
+        <dl>
+          <div><dt>GridRule</dt><dd>implemented</dd></div>
+          <div><dt>FrontierGrid</dt><dd>implemented</dd></div>
+          <div><dt>ContractForge</dt><dd>implemented</dd></div>
+          <div><dt>Credit-DAG</dt><dd>model-free probe</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="design-section" id="designs" aria-labelledby="designs-title">
+      <div class="section-heading">
+        <p class="eyebrow">One question, four instruments</p>
+        <h2 id="designs-title">Choose a layer of the research stack</h2>
+        <p>Each design removes a different ambiguity: what the agent must infer, which commitment it should make, or how training should credit that commitment.</p>
+      </div>
+
+      <div class="design-tabs" role="tablist" aria-label="Environment designs">
+        <button id="tab-gridrule" class="design-tab" type="button" role="tab" aria-selected="true" aria-controls="panel-gridrule" tabindex="0" data-tab="gridrule">
+          <span class="tab-index">01</span>
+          <span><strong>GridRule</strong><small>Rules + composition</small></span>
+        </button>
+        <button id="tab-frontier" class="design-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-frontier" tabindex="-1" data-tab="frontier">
+          <span class="tab-index">02</span>
+          <span><strong>FrontierGrid</strong><small>Evidence + commitment</small></span>
+        </button>
+        <button id="tab-contract" class="design-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-contract" tabindex="-1" data-tab="contract">
+          <span class="tab-index">03</span>
+          <span><strong>ContractForge</strong><small>Active experiment</small></span>
+        </button>
+        <button id="tab-credit" class="design-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-credit" tabindex="-1" data-tab="credit">
+          <span class="tab-index">04</span>
+          <span><strong>Credit-DAG</strong><small>Counterfactual credit</small></span>
+        </button>
+      </div>
+
+      <div class="design-panels">
+        <article id="panel-gridrule" class="design-panel" role="tabpanel" aria-labelledby="tab-gridrule" data-panel="gridrule">
+          <div class="panel-copy">
+            <p class="panel-kicker">Interactive gridworld</p>
+            <h3>Infer the controls, then compose the route.</h3>
+            <p>Every episode can permute five action bindings. The agent must learn what its actions do while sequencing keys, doors, switches, pushes, AND gates, crafting, hazards, and irreversible decoys.</p>
+            <ul class="feature-list">
+              <li><span>Latent layer</span> controls, object roles, and bindings can be hidden independently.</li>
+              <li><span>Planning layer</span> an early action can enable—or destroy—a later route.</li>
+              <li><span>Diagnostic layer</span> a BFS oracle separates task structure from model behavior.</li>
+            </ul>
+          </div>
+          <div class="mechanism-card gridrule-flow" aria-label="GridRule episode flow">
+            <div class="flow-node"><small>observe</small><strong>text grid</strong></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node accent-node"><small>infer</small><strong>5 bindings</strong></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node"><small>compose</small><strong>mechanics</strong></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node success-node"><small>verify</small><strong>exit</strong></div>
+            <p class="flow-note">The main-branch trap reuses a real door color for a decoy. Spending that color on the decoy can make the true route unwinnable.</p>
+          </div>
+        </article>
+
+        <article id="panel-frontier" class="design-panel" role="tabpanel" aria-labelledby="tab-frontier" data-panel="frontier" hidden>
+          <div class="panel-copy">
+            <p class="panel-kicker">Compact commitment benchmark</p>
+            <h3>Read enough evidence before choosing a branch.</h3>
+            <p>FrontierGrid stays deterministic and compact—<strong>7 × 15 cells with five action bindings</strong>. Its difficulty comes from permanent inventory and an exact final gate, not longer navigation.</p>
+            <ul class="feature-list">
+              <li><span>Required set</span> exactly <code>{alpha_key, proof_b}</code>.</li>
+              <li><span>Contaminants</span> <code>beta_contaminant</code> and <code>proof_a_trap</code> cannot be dropped.</li>
+              <li><span>Evidence regimes</span> direct, relational, and false-proof/counterexample clues.</li>
+            </ul>
+          </div>
+          <div class="mechanism-card frontier-map-card">
+            <div class="map-label"><span>Conceptual footprint</span><code>7 × 15</code></div>
+            <div class="mini-map" aria-hidden="true">
+              <span class="agent-cell" style="--r:4;--c:2">●</span>
+              <span class="clue-cell" style="--r:2;--c:4">?</span>
+              <span class="clue-cell" style="--r:6;--c:4">?</span>
+              <span class="item-cell" style="--r:2;--c:8">α</span>
+              <span class="trap-cell" style="--r:6;--c:8">β</span>
+              <span class="fork-cell" style="--r:4;--c:11">◇</span>
+              <span class="gate-cell" style="--r:4;--c:14">▥</span>
+            </div>
+            <div class="map-legend"><span><i class="legend-clue"></i> evidence</span><span><i class="legend-item"></i> item</span><span><i class="legend-trap"></i> contaminant</span><span><i class="legend-gate"></i> exact gate</span></div>
+            <p class="flow-note">The tempting shortcut is “almost right.” The reliable policy gathers disconfirming evidence before crossing the irreversible fork.</p>
+          </div>
+        </article>
+
+        <article id="panel-contract" class="design-panel" role="tabpanel" aria-labelledby="tab-contract" data-panel="contract" hidden>
+          <div class="panel-copy">
+            <p class="panel-kicker">Compact causal-credit environment</p>
+            <h3>Make competing rules disagree.</h3>
+            <p>ContractForge is an implemented, deterministic pure-stdlib environment. A legal episode combines relation types that require different counterfactual tests, then ends in an irreversible <code>COMMIT</code>.</p>
+            <ul class="feature-list">
+              <li><span>OR</span> choose the authentic sigil, not merely a locally achieved choice.</li>
+              <li><span>AND + SEQ</span> pair sigil with ledger, then perform <code>ETCH</code>/<code>BIND</code> in the valid order.</li>
+              <li><span>GUARD</span> spend a limited action budget on an audit before commitment.</li>
+              <li><span>Surface intervention</span> swap <code>NEAR</code>/<code>FAR</code> while preserving code-witness authenticity.</li>
+            </ul>
+          </div>
+          <div class="mechanism-card contract-grammar" aria-label="ContractForge typed episode grammar">
+            <div class="contract-rule"><span>OR</span><strong>sigil A <i>or</i> sigil B</strong><small>authenticity from code + witness</small></div>
+            <div class="contract-connector" aria-hidden="true"></div>
+            <div class="contract-rule"><span>AND</span><strong>authentic sigil + ledger</strong><small>both naturally reachable</small></div>
+            <div class="contract-connector" aria-hidden="true"></div>
+            <div class="contract-rule"><span>SEQ</span><strong>ETCH → BIND</strong><small>order reverses with witness parity</small></div>
+            <div class="contract-connector" aria-hidden="true"></div>
+            <div class="contract-rule guard-rule"><span>GUARD</span><strong>AUDIT?</strong><small>charged against the action budget</small></div>
+            <div class="commit-node"><span>irreversible</span><strong>COMMIT</strong></div>
+            <p class="flow-note">The matched twin exchanges surface position only: witness, codes, authentic identity, irrelevant finish, and operation order stay fixed.</p>
+          </div>
+        </article>
+
+        <article id="panel-credit" class="design-panel" role="tabpanel" aria-labelledby="tab-credit" data-panel="credit" hidden>
+          <div class="panel-copy">
+            <p class="panel-kicker">Training and credit layer</p>
+            <h3>Distinguish progress from causal contribution.</h3>
+            <p>A retained prefix can look useful even when it contains the choice that doomed the episode. Credit-DAG represents decisions as a causal graph and tests matched alternatives.</p>
+            <ul class="feature-list">
+              <li><span>OR fork</span> compare a tempting branch with its evidence-backed alternative.</li>
+              <li><span>AND join</span> measure value that appears only when two prerequisites coexist.</li>
+              <li><span>Certification</span> abstain when a comparison has not been resolved.</li>
+            </ul>
+          </div>
+          <div class="mechanism-card dag-card" aria-label="Credit DAG sketch">
+            <div class="dag-node start-node">state</div>
+            <div class="dag-split" aria-hidden="true"></div>
+            <div class="dag-branches">
+              <div class="dag-node bad-node">wrong proof<small>looks like progress</small></div>
+              <div class="dag-node good-node">counterexample<small>protects future utility</small></div>
+            </div>
+            <div class="dag-join" aria-hidden="true"></div>
+            <div class="dag-node outcome-node">downstream utility</div>
+            <p class="flow-note"><strong>Current scope:</strong> a scripted, model-free probe. It does not yet train an LLM or perform an online weight update.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="lab-section" id="commitment-lab" aria-labelledby="lab-title">
+      <div class="section-heading light-heading">
+        <p class="eyebrow">Interactive · FrontierGrid</p>
+        <h2 id="lab-title">The evidence-before-commitment lab</h2>
+        <p>Try to reach the gate with exactly two required items. Read the panels, choose objects and cross one portal. Anything collected stays in inventory until reset.</p>
+      </div>
+
+      <div class="lab-toolbar">
+        <div class="mode-control">
+          <span class="control-label" id="mode-label">Clue regime</span>
+          <div class="segmented" role="group" aria-labelledby="mode-label">
+            <button type="button" data-mode="direct" aria-pressed="true">Direct</button>
+            <button type="button" data-mode="relational" aria-pressed="false">Relational</button>
+            <button type="button" data-mode="false-proof" aria-pressed="false">False-proof</button>
+          </div>
+        </div>
+        <label class="overlay-toggle">
+          <input id="overlay-toggle" type="checkbox">
+          <span class="toggle-track" aria-hidden="true"><span></span></span>
+          <span>Research overlay</span>
+        </label>
+        <button class="reset-button" id="reset-lab" type="button">Reset episode</button>
+      </div>
+
+      <p class="concept-note"><strong>Conceptual explainer:</strong> this preserves FrontierGrid’s commitment logic, but it is not the benchmark’s map renderer, action loop, or evaluation code.</p>
+
+      <div class="commitment-layout">
+        <div class="station" aria-label="Conceptual FrontierGrid station">
+          <div class="station-track" aria-hidden="true"></div>
+
+          <section class="station-zone evidence-zone" aria-labelledby="evidence-title">
+            <div class="zone-heading">
+              <span class="zone-number">A</span>
+              <div><p class="zone-label">Observe</p><h3 id="evidence-title">Evidence panels</h3></div>
+            </div>
+            <p class="zone-instruction" id="evidence-instruction">The direct panels name the requirements.</p>
+            <div class="choice-grid two-up" id="evidence-choices"></div>
+          </section>
+
+          <section class="station-zone inventory-zone" aria-labelledby="items-title">
+            <div class="zone-heading">
+              <span class="zone-number">B</span>
+              <div><p class="zone-label">Commit</p><h3 id="items-title">Permanent pickups</h3></div>
+            </div>
+            <p class="zone-instruction">Collected items cannot be dropped.</p>
+            <div class="choice-grid item-grid" id="item-choices"></div>
+          </section>
+
+          <section class="station-zone portal-zone" aria-labelledby="portals-title">
+            <div class="zone-heading">
+              <span class="zone-number">C</span>
+              <div><p class="zone-label">Fork</p><h3 id="portals-title">One-way portals</h3></div>
+            </div>
+            <p class="zone-instruction">Crossing either portal closes the other route.</p>
+            <div class="choice-grid two-up" id="portal-choices"></div>
+          </section>
+
+          <section class="station-zone gate-zone" aria-labelledby="gate-title">
+            <div class="zone-heading">
+              <span class="zone-number">D</span>
+              <div><p class="zone-label">Verify</p><h3 id="gate-title">Exact-inventory gate</h3></div>
+            </div>
+            <div class="gate-readout">
+              <span class="gate-icon" aria-hidden="true">▥</span>
+              <div><small>Accepts only</small><code>{alpha_key, proof_b}</code></div>
+            </div>
+            <button class="gate-button" id="try-gate" type="button">Present inventory</button>
+            <span class="research-tag gate-tag">exact-set AND</span>
+          </section>
+        </div>
+
+        <aside class="lab-console" aria-labelledby="console-title">
+          <div class="console-heading">
+            <div><p class="zone-label">Live state</p><h3 id="console-title">Episode console</h3></div>
+            <span class="episode-state" id="episode-state">exploring</span>
+          </div>
+
+          <div class="meter-row">
+            <div><span>evidence</span><strong id="evidence-count">0 / 2</strong></div>
+            <div class="meter"><i id="evidence-meter"></i></div>
+          </div>
+
+          <div class="console-block">
+            <h4>Evidence ledger</h4>
+            <ol class="ledger" id="evidence-ledger">
+              <li class="empty-entry">No panels read yet.</li>
+            </ol>
+          </div>
+
+          <div class="console-block">
+            <h4>Irreversible inventory</h4>
+            <div class="inventory-slots" id="inventory-slots">
+              <span class="empty-entry">Inventory is empty.</span>
+            </div>
+          </div>
+
+          <div class="console-block portal-readout">
+            <h4>Portal commitment</h4>
+            <p id="portal-readout">No portal crossed.</p>
+          </div>
+
+          <div class="status-message" id="lab-status" role="status" aria-live="polite">Read the evidence panels before committing.</div>
+          <div class="trace-box">
+            <span>trace labels</span>
+            <code id="trace-labels">none</code>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="credit-section" id="credit-lab" aria-labelledby="credit-title">
+      <div class="section-heading">
+        <p class="eyebrow">Interactive · Credit-DAG + ContractForge</p>
+        <h2 id="credit-title">When “made progress” is the wrong training signal</h2>
+        <p>The model-free probes use scripted execution to compare credit estimators and experiment choices. These widgets visualize the tests; they are not benchmark runners.</p>
+      </div>
+
+      <div class="credit-grid">
+        <article class="credit-card fork-demo" aria-labelledby="fork-title">
+          <div class="card-number">01 · OR fork</div>
+          <h3 id="fork-title">Change the lens, change the verdict</h3>
+          <p>Both choices can cross a milestone. Only a matched downstream comparison reveals which choice preserved the route.</p>
+
+          <div class="lens-control">
+            <span id="lens-label">Credit lens</span>
+            <div class="segmented compact" role="group" aria-labelledby="lens-label">
+              <button type="button" data-lens="hindsight" aria-pressed="true">Hindsight</button>
+              <button type="button" data-lens="progress" aria-pressed="false">Progress</button>
+              <button type="button" data-lens="paired" aria-pressed="false">Paired edit</button>
+            </div>
+          </div>
+
+          <div class="branch-compare">
+            <button class="branch-card wrong-branch" type="button" data-branch="wrong" aria-pressed="false">
+              <span class="branch-path">claim → proof A</span>
+              <strong>Tempting branch</strong>
+              <span class="score-track"><i id="wrong-score-bar"></i></span>
+              <span class="branch-score" id="wrong-score">positive</span>
+            </button>
+            <span class="versus" aria-hidden="true">vs</span>
+            <button class="branch-card right-branch" type="button" data-branch="right" aria-pressed="false">
+              <span class="branch-path">counterexample → proof B</span>
+              <strong>Evidence branch</strong>
+              <span class="score-track"><i id="right-score-bar"></i></span>
+              <span class="branch-score" id="right-score">positive</span>
+            </button>
+          </div>
+          <div class="credit-explanation" id="credit-explanation" aria-live="polite">Hindsight retains prefixes that reached a milestone, including prefixes containing the harmful wrong-proof choice.</div>
+        </article>
+
+        <article class="credit-card and-demo" aria-labelledby="and-title">
+          <div class="card-number">02 · FrontierGrid AND microprobe</div>
+          <h3 id="and-title">Some value exists only together</h3>
+          <p>Toggle two prerequisites in the original controlled exact-gate boundary snapshot. Neither has standalone utility; the coalition does. ContractForge’s separate legal-action AND test is summarized in its design tab.</p>
+
+          <div class="coalition-controls" role="group" aria-label="Coalition members">
+            <button type="button" id="coalition-a" aria-pressed="false"><span>A</span> prerequisite a</button>
+            <button type="button" id="coalition-b" aria-pressed="false"><span>B</span> prerequisite b</button>
+          </div>
+
+          <div class="utility-display" aria-live="polite">
+            <span>Coalition utility</span>
+            <strong id="utility-value">U(∅) = 0</strong>
+            <div class="utility-track"><i id="utility-bar"></i></div>
+          </div>
+
+          <table class="coalition-table">
+            <caption>Exact AND utility</caption>
+            <thead><tr><th scope="col">coalition</th><th scope="col">utility</th></tr></thead>
+            <tbody>
+              <tr data-coalition="none" class="active-row"><th scope="row">∅</th><td>0</td></tr>
+              <tr data-coalition="a"><th scope="row">{a}</th><td>0</td></tr>
+              <tr data-coalition="b"><th scope="row">{b}</th><td>0</td></tr>
+              <tr data-coalition="ab"><th scope="row">{a,b}</th><td>1</td></tr>
+            </tbody>
+          </table>
+          <p class="and-readout" id="and-readout">Interaction = 1 · Shapley credit = 0.5 each</p>
+        </article>
+
+        <article class="credit-card contract-experiment" aria-labelledby="contract-experiment-title">
+          <div class="experiment-heading">
+            <div>
+              <div class="card-number">03 · Active identifying experiment</div>
+              <h3 id="contract-experiment-title">Break the shortcut without changing the contract</h3>
+              <p>Adaptation data makes two policies indistinguishable. A matched surface twin changes only where the sigils appear, forcing the proxy and causal rules to disagree.</p>
+            </div>
+            <span class="probe-badge">N=500 · seeds 0 + 777</span>
+          </div>
+
+          <div class="experiment-toolbar">
+            <span id="contract-regime-label">Experiment view</span>
+            <div class="segmented compact" role="group" aria-labelledby="contract-regime-label">
+              <button type="button" data-contract-regime="aligned" aria-pressed="true">Aligned adaptation</button>
+              <button type="button" data-contract-regime="swap" aria-pressed="false">Matched surface swap</button>
+            </div>
+          </div>
+
+          <div class="active-experiment-grid">
+            <div class="contract-surface" aria-label="Matched ContractForge pair">
+              <div class="fixed-fields">
+                <span>held fixed</span>
+                <code>witness 14</code>
+                <code>sigil codes</code>
+                <code>authentic identity</code>
+                <code>finish + ETCH/BIND order</code>
+              </div>
+              <div class="surface-slots">
+                <div class="surface-slot near-slot is-authentic" id="contract-near-slot">
+                  <span>NEAR</span>
+                  <strong id="contract-near-sigil">Sigil A</strong>
+                  <small id="contract-near-state">code 1 · authentic</small>
+                </div>
+                <div class="swap-glyph" aria-hidden="true">⇄</div>
+                <div class="surface-slot far-slot is-forged" id="contract-far-slot">
+                  <span>FAR</span>
+                  <strong id="contract-far-sigil">Sigil B</strong>
+                  <small id="contract-far-state">code 2 · forged</small>
+                </div>
+              </div>
+              <p class="surface-caption" id="contract-surface-caption">Aligned support places the authentic sigil in NEAR on every adaptation contract.</p>
+            </div>
+
+            <div class="hypothesis-results" aria-live="polite">
+              <div class="hypothesis-row" id="proxy-hypothesis">
+                <div><span>H<sub>proxy</sub></span><strong>choose NEAR</strong></div>
+                <div class="hypothesis-pick" id="proxy-pick">selects Sigil A</div>
+                <div class="hypothesis-outcome success" id="proxy-outcome">success · +1</div>
+              </div>
+              <div class="hypothesis-row" id="causal-hypothesis">
+                <div><span>H<sub>causal</sub></span><strong>(code + witness) mod 3 = 0</strong></div>
+                <div class="hypothesis-pick" id="causal-pick">selects Sigil A</div>
+                <div class="hypothesis-outcome success" id="causal-outcome">success · +1</div>
+              </div>
+              <div class="certificate-readout tie" id="contract-certificate">
+                <div><span>causal edit</span><strong id="contract-delta">Δ = 0</strong></div>
+                <div class="certificate-track"><i id="contract-certificate-bar"></i></div>
+                <div><span>verdict</span><strong id="contract-verdict">ABSTAIN · observational tie</strong></div>
+                <div><span>pair cost</span><strong>10 actions</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <p class="experiment-explanation" id="contract-explanation" role="status" aria-live="polite">Both rules succeed on aligned adaptation contracts, so more of the same successful data cannot identify the invariant.</p>
+
+          <div class="probe-limits">
+            <p><strong>What was run:</strong> scripted execution with a two-feature proxy policy; seed 777 exactly replicated the seed-0 structural and learning summary.</p>
+            <p><strong>What was not run:</strong> prompt-ledger and graph repair are symbolic upper bounds. The pairwise update is logistic—not an LLM, online RL, TTRL, PPO, GRPO, or LoRA.</p>
+          </div>
+        </article>
+      </div>
+
+      <aside class="scope-banner">
+        <div>
+          <span class="scope-icon" aria-hidden="true">i</span>
+          <p><strong>Evidence boundary</strong><br>Credit-DAG and ContractForge results are deterministic, model-free probes with scripted execution. ContractForge is implemented; its prompt/search repairs remain symbolic upper bounds, and its online toy update is pairwise logistic.</p>
+        </div>
+        <a href="index.html#limits">Read all caveats</a>
+      </aside>
+    </section>
+
+    <section class="takeaway-section" aria-labelledby="takeaway-title">
+      <div>
+        <p class="eyebrow">Design thesis</p>
+        <h2 id="takeaway-title">Decompose → experiment → certify → consolidate.</h2>
+      </div>
+      <p>GridRule established the decomposition problem. FrontierGrid makes premature commitment costly. ContractForge compiles typed uncertainty into a legal intervention where competing rules disagree. Credit-DAG certifies the responsible node or edge before evidence enters prompts, search, or weights.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>GridRule environment-design explainer · research snapshot</p>
+    <div><a href="index.html">Current findings</a><a href="#main">Back to top</a><a href="/">Dylan Zhang</a></div>
+  </footer>
+
+  <noscript><p class="noscript">This document’s diagrams remain readable without JavaScript, but the commitment and credit labs require JavaScript.</p></noscript>
+  <script src="environment.js"></script>
+</body>
+</html>

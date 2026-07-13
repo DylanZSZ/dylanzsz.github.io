@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GridRule — Self-Proposed Subgoal RL in an ARC-AGI-3-Style Environment</title>
-<meta name="description" content="A pilot study on small-model (≤1.5B) trial-and-error rule discovery and compositional generalization via self-proposed subgoal RL in GridRule, an ARC-AGI-3-style interactive gridworld." />
+<title>GridRule — Irreversible Decisions, Evidence, and Causal Credit</title>
+<meta name="description" content="A July 2026 research snapshot of GridRule, FrontierGrid, and ContractForge: irreversible decisions, evidence-before-action, active experiments, and causal credit." />
+<meta property="og:title" content="GridRule — Irreversible Decisions, Evidence, and Causal Credit" />
+<meta property="og:description" content="Current findings from GridRule, FrontierGrid, ContractForge, and Credit-DAG, with evidence strength and limitations made explicit." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://dylanzsz.github.io/gridrule/" />
+<meta name="theme-color" content="#160f2b" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,529 +18,438 @@
 </head>
 <body>
 
-<nav class="topnav">
+<nav class="topnav" aria-label="Primary navigation">
   <div class="topnav-inner">
     <a class="topnav-brand" href="#top"><span class="brand-dot"></span> GridRule</a>
     <ul class="topnav-links">
-      <li><a href="#demo">Play</a></li>
-      <li><a href="#tldr">TL;DR</a></li>
-      <li><a href="#env">Environment</a></li>
-      <li><a href="#method">Method</a></li>
-      <li><a href="#results">Results</a></li>
-      <li><a href="#transfer">Transfer</a></li>
-      <li><a href="#mechanism">Mechanism</a></li>
-      <li><a href="#frontier">Harder</a></li>
-      <li><a href="#caveats">Caveats</a></li>
+      <li><a href="#snapshot">Snapshot</a></li>
+      <li><a href="#lineages">Environments</a></li>
+      <li><a href="#gridrule-findings">GridRule</a></li>
+      <li><a href="#frontier-findings">FrontierGrid</a></li>
+      <li><a href="#contractforge">ContractForge</a></li>
+      <li><a href="#credit">Credit-DAG</a></li>
+      <li><a href="#limits">Limits</a></li>
+      <li><a class="nav-cta" href="environment.html">Interactive design ↗</a></li>
     </ul>
   </div>
 </nav>
 
-<header id="top" class="hero">
+<header id="top" class="hero hero-current">
   <div class="hero-inner">
-    <div class="hero-eyebrow">Interactive ARC-AGI-3-style environment · label-free RL · ≤1.5B scale</div>
+    <div class="hero-eyebrow">Research snapshot · updated July 13, 2026</div>
     <h1 class="hero-title">
-      Can a tiny model learn to <span class="accent">decompose problems</span><br/>
-      by proposing its own subgoals?
+      From solving the grid to knowing<br />
+      <span class="accent">when not to act.</span>
     </h1>
-
     <p class="hero-sub">
-      We built <strong>GridRule</strong> — a cheap, procedural gridworld capturing ARC-AGI-3's two hard demands: latent-rule induction by trial and error, and compose-back subgoal chaining. We then asked whether a 0.8B model trained with label-free self-distillation can learn a transferable decomposition skill by proposing the subgoals it wants to reach — nothing else.
+      GridRule began as a test of latent controls and compositional subgoals. The current work asks a harder question: can an agent gather the right evidence, avoid an irreversible but tempting commitment, and design an experiment that identifies which earlier decision actually changed the outcome?
     </p>
 
     <aside class="disclaimer">
-      <div class="disclaimer-label">A note before you read</div>
+      <div class="disclaimer-label">How to read this page</div>
       <p>
-        This is a <strong>pilot endeavor</strong> — small-scale, exploratory, single-researcher. Most claims rest on n=2–3 seeds; the environment is synthetic. We share this honestly as an early conversation starter. Treat the findings as encouraging and preliminary, not conclusive.
+        This is an evolving research program, not a finished benchmark paper. Results are labeled by evidence strength. Held-out small-model results use few seeds; FrontierGrid model traces are diagnostic cases; Credit-DAG currently has model-free probes, not an online learning result.
       </p>
     </aside>
 
     <div class="hero-links">
-      <a class="pill pill-ghost" href="#demo">▶ Try the demo ↓</a>
-      <a class="pill pill-ghost" href="#results">Jump to results ↓</a>
+      <a class="pill" href="environment.html">Explore the environment design ↗</a>
+      <a class="pill pill-ghost" href="#snapshot">Read the findings ↓</a>
       <a class="pill pill-ghost" href="/">← Dylan Zhang</a>
     </div>
   </div>
-  <div class="hero-scroll">scroll ↓</div>
 </header>
 
 <main>
 
-<!-- ===== LIVE DEMO ===== -->
-<section id="demo" class="band band-dark">
+<section id="snapshot" class="band band-tint">
   <div class="container narrow">
-    <div class="kicker">Interactive demo</div>
-    <h2>Play GridRule</h2>
-    <p style="color:#b0a0d8; margin-bottom: 0;">
-      The environment your agent lives in. Controls are <em>latently permuted</em> each game — press the arrows to discover which moves where. Then get the key, open the door, and reach the exit.
-      Hit <strong>🤖 Watch model solve</strong> to see subgoal proposals in action.
-    </p>
+    <div class="kicker">Current snapshot</div>
+    <h2>The research arc in four findings</h2>
 
-    <div id="demo-container">
-      <!-- level picker -->
-      <div class="demo-lvl-row">
-        <button class="demo-lvl-btn dlb-active" data-level="0">1-gate: door</button>
-        <button class="demo-lvl-btn" data-level="1">2-gate: door + switch</button>
-      </div>
-      <div id="demo-desc"></div>
-
-      <!-- grid -->
-      <div id="demo-hud"></div>
-      <div id="demo-grid-wrap">
-        <div id="demo-grid-inner" tabindex="0"></div>
-      </div>
-
-      <!-- log -->
-      <div id="demo-log"></div>
-
-      <!-- d-pad + controls table -->
-      <div class="demo-bottom">
-        <!-- d-pad -->
-        <div>
-          <div class="dpad">
-            <div></div>
-            <button class="dpad-btn" data-action="0">↑</button>
-            <div></div>
-            <button class="dpad-btn" data-action="2">←</button>
-            <div class="dpad-empty"></div>
-            <button class="dpad-btn" data-action="3">→</button>
-            <div></div>
-            <button class="dpad-btn" data-action="1">↓</button>
-            <div></div>
-          </div>
-          <p style="font-size:11px; color:#5a4880; margin-top:8px; font-family:var(--sans);">or WASD / arrow keys</p>
-        </div>
-
-        <!-- controls discovered -->
-        <div class="demo-ctrl">
-          <div class="demo-ctrl-title">Controls discovered</div>
-          <table><tbody id="demo-ctrl-body"></tbody></table>
-        </div>
-      </div>
-
-      <!-- action buttons -->
-      <div class="demo-actions">
-        <button class="demo-btn" id="demo-btn-reset">↺ New game</button>
-        <button class="demo-btn" id="demo-btn-auto">🤖 Watch model solve</button>
-        <button class="demo-btn demo-btn-reveal" id="demo-btn-reveal">🔎 Reveal controls</button>
-      </div>
-    </div>
-
-    <p style="font-size:.9rem; color:#6a5898; margin-top:18px; font-family:var(--sans);">
-      <strong style="color:#9080c0;">What this demonstrates:</strong>
-      When the model proposes <code>SUBGOAL:(r,c)</code> it commits to a specific waypoint — you see the pulsing gold cell.
-      The model doesn't know the controls in advance; it induces them from experience, just like you do.
-    </p>
-  </div>
-</section>
-
-<!-- ===== TL;DR ===== -->
-<section id="tldr" class="band band-tint">
-  <div class="container narrow">
     <div class="tldr-card">
-      <div class="tldr-label">TL;DR — pilot findings</div>
       <ul class="tldr-list">
-        <li><strong>The env is the contribution as much as the results.</strong> GridRule has explicit knobs to isolate two sources of difficulty — rule discovery and subgoal chaining — and an oracle-execution probe that lets you separate planning failures from navigation failures.</li>
-        <li><strong>Self-proposed coordinate subgoals produce a transferable decomposition skill.</strong> Train on single-gate rooms, test on three-gate chains — the planning transfers. Replicated on two independent seeds, ≈1.8× baseline pass@1.</li>
-        <li><strong>The bottleneck is execution, not decomposition.</strong> Give the model perfect navigation to its own proposed waypoints and unseen 3-gate tasks jump from 0.26 → 0.80+. The model knows where to go; it struggles to get there over long chains.</li>
-        <li><strong>Different mechanics break different faculties.</strong> Irreversibility breaks planning (oracle-exec provides zero rescue). Hazards break navigation. Crafting breaks sequencing. The env can tell these apart cleanly.</li>
+        <li><strong>Irreversibility is a causal difficulty, not just a harder map.</strong> On matched held-out layouts, base pass@8 falls from 1.000 when key use is reversible to 0.367 when a decoy can consume the needed color.</li>
+        <li><strong>The strongest cure is data-centric.</strong> Safe, short demonstrations selected with a hard success filter lift irreversible pass@8 to 0.800 while preserving reversible performance at 0.984.</li>
+        <li><strong>Milestone achievement is not reliable credit.</strong> In FrontierGrid probes, harmful proof and contaminant milestones are reached 100% of the time and receive positive hindsight credit, even though matched alternatives show negative advantage.</li>
+        <li><strong>Evidence should drive an identifying experiment.</strong> FrontierGrid tests evidence-before-action; ContractForge then asks for a matched intervention that separates a causal rule from a perfectly correlated shortcut.</li>
       </ul>
     </div>
+
+    <div class="evidence-legend" aria-label="Evidence levels used on this page">
+      <span class="evidence-chip ev-heldout">Held-out · 2 seeds</span>
+      <span class="evidence-chip ev-replicated">Scripted · N=500</span>
+      <span class="evidence-chip ev-diagnostic">Diagnostic · single trace</span>
+      <span class="evidence-chip ev-design">Design / not yet learned</span>
+    </div>
   </div>
 </section>
 
-<!-- ===== ENVIRONMENT ===== -->
-<section id="env" class="band">
+<section id="lineages" class="band">
+  <div class="container">
+    <div class="section-head narrow">
+      <div class="kicker">Environment lineages</div>
+      <h2>Three environments, one narrowing question</h2>
+      <p>All three are deterministic, procedural, and text-native. GridRule and FrontierGrid are spatial BFS environments; ContractForge is a compact exact-action contract laboratory. Each targets a different failure boundary.</p>
+    </div>
+
+    <div class="lineage-grid">
+      <article class="lineage-card lineage-main">
+        <div class="lineage-topline">
+          <span class="branch-label">Main branch</span>
+          <span class="evidence-chip ev-heldout">Implemented + trained</span>
+        </div>
+        <h3>GridRule</h3>
+        <p class="lineage-question">Can a small model discover latent rules, compose subgoals, and avoid an unrecoverable trap?</p>
+        <ul class="compact-list">
+          <li>Per-episode action, role, and binding permutations</li>
+          <li>Doors, switches, push blocks, AND-gates, crafting, hazards, fog, and drift</li>
+          <li>Decoy door that consumes a color and silently makes the exit unreachable</li>
+          <li>CTTD, selected-demonstration SFT, critics, and online self-reward probes</li>
+        </ul>
+      </article>
+
+      <article class="lineage-card lineage-hard">
+        <div class="lineage-topline">
+          <span class="branch-label">Hard-environment branch</span>
+          <span class="evidence-chip ev-diagnostic">Implemented + probing</span>
+        </div>
+        <h3>FrontierGrid</h3>
+        <p class="lineage-question">Can an agent delay commitment until it has combined all decision-relevant evidence?</p>
+        <ul class="compact-list">
+          <li>Compact 7×15 layout with five possible action bindings</li>
+          <li>Direct, relational, and claim-versus-counterexample evidence</li>
+          <li>Safe and bad portals, wrong-proof shortcut, permanent contaminants</li>
+          <li>Final gate accepts exactly <code>{alpha_key, proof_b}</code></li>
+        </ul>
+      </article>
+
+      <article class="lineage-card lineage-contract">
+        <div class="lineage-topline">
+          <span class="branch-label">Hard-environment branch</span>
+          <span class="evidence-chip ev-replicated">Implemented + probed</span>
+        </div>
+        <h3>ContractForge</h3>
+        <p class="lineage-question">Can a decomposition propose the cheapest legal experiment that distinguishes a causal rule from a shortcut?</p>
+        <ul class="compact-list">
+          <li>Native <code>OR</code> choice, <code>AND</code> prerequisites, <code>SEQ</code> order, and optional <code>GUARD</code></li>
+          <li>Authenticity follows a latent code–witness relation</li>
+          <li>Matched surface twin swaps only the tempting NEAR/FAR proxy</li>
+          <li>All structural comparisons reached through legal actions from reset</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="environment-cta">
+      <div>
+        <div class="kicker">Separate interactive document</div>
+        <h3>See the design as a state machine, not a feature list.</h3>
+        <p>Toggle evidence regimes, commit to items and portals, inspect the hidden research labels, and fork the same decision boundary.</p>
+      </div>
+      <a class="pill" href="environment.html">Open environment explorer ↗</a>
+    </div>
+  </div>
+</section>
+
+<section id="gridrule-findings" class="band band-tint">
   <div class="container narrow">
-    <div class="kicker">The environment</div>
-    <h2>GridRule: a diagnostic research instrument</h2>
+    <div class="kicker">Main branch · corrected held-out results</div>
+    <h2>Irreversibility flips the bottleneck</h2>
     <p>
-      Multi-step problem solving usually bundles two distinct sources of difficulty together: you don't know the rules, and winning requires chaining sub-plans where an early mistake strands you. I wanted to pull those apart and measure them independently. That's the design goal behind GridRule.
-    </p>
-    <p>
-      The env has explicit <strong>knobs</strong>. You can reveal or hide controls (which action moves which direction), object roles (which glyph means key vs decoy), and key-door bindings — independently, per episode. Turning them on and off lets you isolate exactly which source of difficulty the model is struggling with.
+      GridRule's decoy shares a real door color. Under the irreversible rule, opening it spends the color required later; under the reversible control, the same map remains recoverable. The ON/OFF comparison changes that rule while holding the layouts fixed.
     </p>
 
-    <div class="result-grid">
-      <div class="result-card rc-accent">
-        <div class="rc-label">Difficulty knob</div>
-        <div class="rc-num">n_gates</div>
-        <div class="rc-desc">chain length — how many subgoals must be composed to win</div>
+    <div class="metric-pair">
+      <div class="metric-panel metric-risk">
+        <div class="metric-label">Base · irreversible ON</div>
+        <div class="metric-value">0.367</div>
+        <div class="metric-note">held-out pass@8</div>
       </div>
-      <div class="result-card rc-blue">
-        <div class="rc-label">Shift knob</div>
-        <div class="rc-num">mechanics</div>
-        <div class="rc-desc">which gate types are active: door (key), gate (switch), push (block)</div>
-      </div>
-      <div class="result-card rc-good">
-        <div class="rc-label">Oracle</div>
-        <div class="rc-num">BFS</div>
-        <div class="rc-desc">always knows the optimal solution — withheld from the model, used only for reward and eval</div>
+      <div class="metric-arrow" aria-hidden="true">→</div>
+      <div class="metric-panel metric-safe">
+        <div class="metric-label">Base · reversible OFF</div>
+        <div class="metric-value">1.000</div>
+        <div class="metric-note">held-out pass@8</div>
       </div>
     </div>
 
-    <h3 class="mt">Compose-back: errors propagate</h3>
-    <p>
-      The chain structure is the key design idea. To win, you must get the key, open the door, hit the switch, open the gate — in order. It's not just "navigate to a goal." A wrong early subgoal strands you with no way forward. This means sub-policies genuinely depend on each other, and a model that gets the chain half-right still fails.
-    </p>
-    <p>
-      The reward penalizes waste too: efficiency = <em>(optimal steps / steps used)²</em>. Trial-and-error bumping is allowed but costly. The model learns to be right <em>and</em> efficient.
-    </p>
-  </div>
-</section>
-
-<!-- ===== METHOD ===== -->
-<section id="method" class="band band-tint">
-  <div class="container narrow">
-    <div class="kicker">The method</div>
-    <h2>CTTD + self-proposed subgoals</h2>
-    <p>
-      The training loop is <strong>CTTD</strong> (Continual Test-Time self-Distillation): a four-phase cycle that lets the model teach itself from its own successful episodes — no human labels anywhere.
-    </p>
-
-    <ul class="steps">
-      <li>
-        <div class="step-num">W</div>
-        <div class="step-body">
-          <strong>WAKE</strong>
-          <p>Roll out K episodes per level. The model emits <code>SUBGOAL:(r,c)</code> at each turn, then acts. The environment verifies whether the proposed cell was reached.</p>
-        </div>
-      </li>
-      <li>
-        <div class="step-num">R</div>
-        <div class="step-body">
-          <strong>REWARD</strong>
-          <p>Score each episode with environment success and action efficiency (RHAE = <code>min(1, optimal/used)²</code>). No oracle labels — the only signal is whether the model won, and how efficiently.</p>
-        </div>
-      </li>
-      <li>
-        <div class="step-num">F</div>
-        <div class="step-body">
-          <strong>FILTER</strong>
-          <p>Keep only efficient successes (≤2.5× optimal). Optionally cap duplicate behavioral signatures (<code>--diverse-filter</code>) so one lucky trajectory can't flood the distillation set.</p>
-        </div>
-      </li>
-      <li>
-        <div class="step-num">D</div>
-        <div class="step-body">
-          <strong>DREAM</strong>
-          <p>LoRA-SFT on kept episodes + replayed buffer. EMA weight averaging (α=0.7) smooths the policy. Advance to next stage when the promotion bar is met on a held-out eval set.</p>
-        </div>
-      </li>
-    </ul>
-
-    <h3 class="mt">Hindsight distillation</h3>
-    <p>
-      If an episode fails overall but the model did reach its proposed subgoal, we distill the prefix up to subgoal-achievement. This recycles "partial credit" episodes — the model learns <em>this decomposition step was correct</em> even if the rest went wrong.
-    </p>
-
-    <div class="callout">
-      <p><strong>Why coordinate subgoals?</strong> Typed abstract labels (<code>ITEM / GATE / EXIT</code>) gave ~0 bootstrapping at 0.8B — abstract names provide no navigation anchor. Emitting a coordinate <em>forces</em> the model to localize a target, doing double duty as decomposition and perception anchor.</p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ===== RESULTS ===== -->
-<section id="results" class="band">
-  <div class="container narrow">
-    <div class="kicker">Headline results</div>
-    <h2>The fair evaluation: same test set, same budget</h2>
-    <p>
-      All policies evaluated on the same fixed held-out test set — never seen during training. We report pass@1 and pass@8 across all curriculum stages.
-    </p>
-
-    <figure class="fig">
-      <img src="figures/fair_eval.png" alt="Fair evaluation: pass@1 per stage across policies" loading="lazy">
-      <figcaption><strong>Fair evaluation results</strong> — per-stage pass@1 on the fixed held-out test set. The two strong subgoal seeds (seed-1, seed-2) substantially outperform baseline across all stages. Seed-0 with the tuned bar (0.65) is ≈ baseline everywhere — no bar-0.65 run falls below baseline.</figcaption>
-    </figure>
+    <p class="microcopy">Pass@8 means at least one success in eight sampled rollouts; it is not first-attempt accuracy.</p>
 
     <div class="tbl-wrap">
       <table>
         <thead>
-          <tr><th>Policy</th><th>pass@1</th><th>pass@8</th><th>vs baseline</th></tr>
+          <tr><th>Policy / condition</th><th>Irreversible ON</th><th>Reversible OFF</th><th>Evidence</th></tr>
         </thead>
         <tbody>
-          <tr><td>Baseline (plain ReST)</td><td>0.375</td><td>0.76</td><td>—</td></tr>
-          <tr><td>Subgoal seed-0, bar 0.5 (original)</td><td>0.314</td><td>0.62</td><td style="color:var(--bad)">−16%</td></tr>
-          <tr><td>Subgoal seed-0, bar 0.65 (tuned)</td><td>0.378</td><td>0.80</td><td>≈ baseline</td></tr>
-          <tr style="background:rgba(124,58,237,.05)"><td class="hi">Subgoal seed-2, bar 0.65 ★</td><td class="hi">0.679</td><td class="hi">0.91</td><td class="good">+81%</td></tr>
-          <tr style="background:rgba(124,58,237,.05)"><td class="hi">Subgoal seed-1, bar 0.5 ★</td><td class="hi">0.699</td><td class="hi">0.91</td><td class="good">+86%</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="finding">
-      <div class="finding-label">Replicated on two seeds</div>
-      <p>Seed-1 (0.699) and seed-2 (0.679) both reach ≈1.8× baseline pass@1, independently. The tuned promotion bar (0.65) guarantees <strong>≥ baseline as a floor</strong>. Seed variance governs whether the strong ceiling is hit.</p>
-    </div>
-
-    <h3 class="mt">The promotion bar is the key hyperparameter</h3>
-    <p>
-      Our fair evaluation revealed that <em>curriculum racing</em> — promoting to the next stage quickly — anti-correlates with policy quality. The promotion bar controls how thoroughly each primitive is mastered before advancement.
-    </p>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Bar</th><th>Behavior</th><th>Mean pass@1</th><th>pass@8</th></tr></thead>
-        <tbody>
-          <tr><td>0.5 (original)</td><td>Races, undertrained</td><td>0.314</td><td>0.62</td></tr>
-          <tr><td class="hi">0.65 (tuned)</td><td class="hi">Masters AND advances</td><td class="hi">0.378–0.679</td><td class="hi">0.80–0.91</td></tr>
-          <tr><td>0.8 (strict)</td><td>Stalls on stage 1</td><td colspan="2" style="color:var(--ink-quiet)">never promotes</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- ===== TRANSFER ===== -->
-<section id="transfer" class="band band-tint">
-  <div class="container narrow">
-    <div class="kicker">Transfer & compositional generalization</div>
-    <h2>Master primitives → compose</h2>
-    <p>
-      The most exciting finding: a policy trained only on single-gate primitive rooms solves unseen two-gate compositions better than a policy trained directly on those compositions.
-    </p>
-
-    <figure class="fig">
-      <img src="figures/transfer.png" alt="Transfer to unseen harder stages" loading="lazy">
-      <figcaption><strong>Transfer to unseen harder stages.</strong> All arms trained only on stage 0 (single-door). Subgoal arms consistently outperform baseline on unseen stages 1–4, across all 5 seeds.</figcaption>
-    </figure>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Arm (all trained s0 only)</th><th>Unseen s1–4 pass@1</th><th>vs baseline</th></tr></thead>
-        <tbody>
-          <tr><td>Plain baseline</td><td>0.264</td><td>—</td></tr>
-          <tr><td>Subgoal + hindsight (2 seeds, mean)</td><td>0.465</td><td class="good">+1.76×</td></tr>
-          <tr><td>Subgoal − hindsight (3 seeds, mean)</td><td>0.440</td><td class="good">+1.67×</td></tr>
+          <tr><td>Base</td><td>0.367</td><td>1.000</td><td>held-out</td></tr>
+          <tr><td>Safe trap demos only</td><td>0.734</td><td>0.900</td><td>2 train seeds</td></tr>
+          <tr class="row-highlight"><td class="hi">Safe trap + reversible demos</td><td class="good">0.800</td><td class="good">0.984</td><td>2 train × 2 eval seeds</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="callout good">
-      <p>All <strong>5 subgoal arms</strong> across 5 independent seeds land above baseline. This is the most robustly replicated finding in this pilot.</p>
+      <p><strong>What worked:</strong> constrain collection to safe trajectories, keep successful trajectories with a hard filter, select short demonstrations, clone the corrected actions, and mix in reversible examples to preserve navigation.</p>
     </div>
 
-    <h3 class="mt">Compositional depth: extends to unseen depth-3</h3>
+    <div class="audit-note">
+      <span class="evidence-chip ev-heldout">Audit correction</span>
+      <p>A July audit found deterministic train/evaluation seed overlap in an earlier cure family. The values above use disjoint evaluation seeds and replace the older absolute cure numbers. The matched causal ON/OFF effect survived.</p>
+    </div>
+
+    <h3 class="mt">The original transfer result still matters—within scope</h3>
     <p>
-      The comp-gen policy (never saw more than 1 gate) evaluated at increasing depth:
+      In reversible tasks, coordinate subgoals trained on single-gate primitives transferred to unseen compositions. Across five small pilot arms, every subgoal arm exceeded the plain baseline on unseen stages; mean pass@1 was 0.440–0.465 versus 0.264. That supports transferable decomposition, but not the broader claim that execution is always the bottleneck.
     </p>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Stage</th><th>Gates</th><th>pass@1</th><th>pass@8</th></tr></thead>
-        <tbody>
-          <tr><td>s3 2-door</td><td>2</td><td class="good">0.944</td><td>1.00</td></tr>
-          <tr><td>s4 2-mix</td><td>2</td><td>0.719</td><td>0.90</td></tr>
-          <tr><td>s5 2-mix big room</td><td>2 (bigger)</td><td>0.406</td><td>0.80</td></tr>
-          <tr><td>s6 3-gate</td><td>3 (unseen depth)</td><td>0.263</td><td>0.45</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <figure class="fig">
-      <img src="figures/depth_capstone.png" alt="Compositional depth scaling" loading="lazy">
-      <figcaption><strong>Compositional depth scaling.</strong> pass@1 decays gradually with depth (execution load increases); pass@8 stays much higher, indicating the policy often has a valid plan but needs retries. Replicated on two seeds.</figcaption>
-    </figure>
-  </div>
-</section>
-
-<!-- ===== MECHANISM ===== -->
-<section id="mechanism" class="band">
-  <div class="container narrow">
-    <div class="kicker">Mechanism</div>
-    <h2>Decomposition transfers — execution is the bottleneck</h2>
-    <p>
-      To separate planning from navigation, we built an oracle-execution probe: the environment auto-navigates (via BFS) to whatever subgoal the model proposes. The model only plans; execution is perfect.
-    </p>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Stage</th><th>Normal pass@1</th><th>Oracle-exec pass@1</th><th>Lift</th></tr></thead>
-        <tbody>
-          <tr><td>s0 1-door</td><td>0.738</td><td>1.000</td><td>+0.26</td></tr>
-          <tr><td>s1 1-gate</td><td>0.694</td><td>0.950</td><td>+0.26</td></tr>
-          <tr><td>s3 2-door</td><td>0.744</td><td>0.950</td><td>+0.21</td></tr>
-          <tr><td><strong>s6 3-gate (unseen)</strong></td><td>0.263</td><td class="good"><strong>0.80</strong></td><td class="good"><strong>+0.54</strong></td></tr>
-        </tbody>
-      </table>
-    </div>
 
     <div class="finding">
-      <div class="finding-label">Replicated on two seeds</div>
-      <p>On s6 (3-gate, never trained on): seed-2 → <strong>0.26→0.80</strong>, seed-3 → <strong>0.38→0.95</strong>. The model's decomposition for unseen 3-gate tasks is near-perfect. What collapses performance is navigating there over long chains — execution failure, not planning failure.</p>
+      <div class="finding-label">Mechanic-specific diagnosis</div>
+      <p>Reversible depth mainly exposes execution. Hazards expose routing. Crafting exposes order. Irreversibility exposes lookahead before commitment. The environment's useful output is not only success—it is which faculty broke.</p>
     </div>
-
-    <div class="mech-row mt">
-      <div class="mech-box good">
-        <h4>Transfers well ✓</h4>
-        <p>Decomposition — <em>which subgoal to pursue next</em>. Proposal sensibility is 2.5–5× above chance on every unseen stage; doesn't degrade at 3-gate depth.</p>
-      </div>
-      <div class="mech-box bad">
-        <h4>Execution bottleneck ✗</h4>
-        <p>Multi-step navigation to the waypoint. More cells, more steps, more failure opportunities. Bigger models help here (+0.11 at 1.7B vs 0.8B on the hardest stage).</p>
-      </div>
-    </div>
-
   </div>
 </section>
 
-<!-- ===== THREE CHEAP TRICKS ===== -->
-<section id="tricks" class="band band-tint">
+<section id="learning-findings" class="band">
   <div class="container narrow">
-    <div class="kicker">Three cheap compound gains</div>
-    <h2>LoRA-souping, diverse filtering, capacity</h2>
+    <div class="kicker">Learning and evaluation</div>
+    <h2>Decision boundaries beat aggregate scores</h2>
 
-    <h3>LoRA-souping: eliminate seed selection, for free</h3>
+    <div class="finding-grid">
+      <article class="finding-card">
+        <div class="evidence-chip ev-heldout">Held-out transitions</div>
+        <h3>A critic can be 97.5% accurate and miss the decision.</h3>
+        <p>The original critic caught only 11 of 106 actual decoy-commit boundaries: 0.104 recall. Hard-negative mining raised boundary recall to 1.000 while overall accuracy stayed 0.971.</p>
+        <div class="mini-metric"><span>Boundary recall</span><strong>0.104 → 1.000</strong></div>
+      </article>
+
+      <article class="finding-card">
+        <div class="evidence-chip ev-heldout">Online RL · 2 seeds</div>
+        <h3>Sparse self-reward matches outcome reward, with more variance.</h3>
+        <p>Environment-verified typed subgoal reward reached mean final win 0.500 versus 0.525 for outcome reward. Dense distance reward accumulated about 13× faster while wins stayed nearly flat.</p>
+        <div class="mini-metric"><span>Final win</span><strong>0.500 vs 0.525</strong></div>
+      </article>
+
+      <article class="finding-card">
+        <div class="evidence-chip ev-diagnostic">Controlled probe</div>
+        <h3>Observability mattered more than volatility.</h3>
+        <p>When controls were shown, stationary and fast-drift conditions both remained high (0.933 and 0.967). When controls were hidden, both collapsed to zero in the tested probe.</p>
+        <div class="mini-metric"><span>Shown / hidden</span><strong>≈0.95 / 0.00</strong></div>
+      </article>
+    </div>
+
+    <div class="callout">
+      <p><strong>Current interpretation:</strong> self-reward is competence-gated. It can stabilize a policy that already proposes meaningful, verifiable subgoals; it did not reliably create that competence from a weak policy or exceed the seed model's ceiling.</p>
+    </div>
+  </div>
+</section>
+
+<section id="frontier-findings" class="band band-dark">
+  <div class="container narrow">
+    <div class="kicker">Hard-environment branch · FrontierGrid</div>
+    <h2>Harder by changing the decision, not enlarging the map</h2>
     <p>
-      Rather than cherry-picking the best seed post-hoc, we average the LoRA weights of 3 trained adapters (model souping) and evaluate the averaged model — no new training.
+      FrontierGrid fixes navigation in a compact 7×15 world and makes the evidence structure harder. A claim can make a nearby proof look useful; only a separate counterexample reveals that the shortcut cannot return. Picking the proof or a contaminant is permanent, and the final gate requires an exact clean inventory.
     </p>
+
+    <div class="dark-stat-grid">
+      <div class="dark-stat">
+        <span>Evidence-aware policy</span>
+        <strong>100%</strong>
+        <small>N=500 scripted instances</small>
+      </div>
+      <div class="dark-stat dark-stat-bad">
+        <span>Collect-nearest</span>
+        <strong>0%</strong>
+        <small>perfect target navigation</small>
+      </div>
+      <div class="dark-stat dark-stat-bad">
+        <span>Clue then nearest</span>
+        <strong>0%</strong>
+        <small>still collects a banned item</small>
+      </div>
+    </div>
+
+    <p class="dark-note">This local probe varies mirrored geometry and controls. It establishes the intended causal trap, not broad model capability.</p>
+
+    <h3 class="mt">A diagnostic model trace separates proof choice from efficiency</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Condition</th><th>Evidence used</th><th>Commitment</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>False-proof route</td><td>tempting claim only</td><td>invalid proof + bad portal</td><td>failed in 12 actions</td></tr>
+          <tr><td>Route + checklist</td><td>claim + counterexample</td><td>valid required items</td><td>0.80 progress at action cap</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout dark-callout">
+      <p><strong>Diagnostic, not a benchmark score:</strong> these are single-model, single-seed traces. The checklist corrected proof selection but did not solve within 20 actions. That isolates a remaining execution-efficiency failure.</p>
+    </div>
+
+    <p>
+      A budget-20 test-time-evolution runner also repaired one unsafe candidate and won in 20 final actions after 44 total actions. The base trace already won in 18, so this validates the runner—not superiority of the method.
+    </p>
+  </div>
+</section>
+
+<section id="contractforge" class="band">
+  <div class="container narrow">
+    <div class="kicker">Decompose-to-Experiment · ContractForge</div>
+    <h2>Confounded success cannot identify the rule</h2>
+    <p>
+      ContractForge removes spatial navigation and makes the causal structure native to the episode. An agent selects one of two sigils, takes an independent ledger, performs <code>ETCH</code> and <code>BIND</code> in the required order, optionally audits, and commits. Authenticity is determined by a latent code–witness relation; “pick the NEAR sigil” is a deliberately perfect shortcut during adaptation.
+    </p>
+
+    <div class="relation-grid" aria-label="ContractForge relation tests">
+      <div><code>OR</code><strong>Which sigil?</strong><span>authentic +1 · forged −1</span></div>
+      <div><code>AND</code><strong>Sigil + ledger</strong><span>(−1, −1, −1, +1)</span></div>
+      <div><code>SEQ</code><strong>Which order?</strong><span>same actions · +1 vs −1</span></div>
+      <div><code>GUARD</code><strong>Audit first?</strong><span>benefit depends on shift risk</span></div>
+    </div>
+
+    <h3 class="mt">Passive experience leaves the shortcut unidentified</h3>
+    <p>
+      On all 500 aligned adaptation contracts, both “choose NEAR” and the code–witness rule win with a perfect efficiency score (RHAE 1.0). Passive four-policy search spends 672 actions, breaks the tie toward the simpler surface rule, and then scores 0% when the authentic sigil moves to FAR. TTRL-like self-imitation spends 1,280 actions on successful aligned traces and also remains at 0% held-out success.
+    </p>
+
+    <div class="experiment-contrast">
+      <article class="contrast-card contrast-passive">
+        <span class="evidence-chip ev-diagnostic">Confounded support</span>
+        <h3>Observe more</h3>
+        <div class="contrast-number">0%</div>
+        <p>held-out proxy-flip success after passive search or successful-trace imitation</p>
+      </article>
+      <div class="contrast-vs" aria-hidden="true">vs</div>
+      <article class="contrast-card contrast-active">
+        <span class="evidence-chip ev-replicated">Matched intervention</span>
+        <h3>Swap one surface field</h3>
+        <div class="contrast-number">100%</div>
+        <p>certificate yield at 10 actions per pair; causal edit advantage +2</p>
+      </article>
+    </div>
+
+    <p>
+      The matched twin preserves the witness, sigil codes, authentic identity, finish, and operation order while swapping only NEAR/FAR. One pair is enough for exact symbolic prompt or graph memory to repair held-out behavior. A two-feature logistic proxy needs six minibatches—48 certificates and 480 actions—to cross from the shortcut to the causal feature and reach 100%.
+    </p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>GUARD policy</th><th>Aligned RHAE</th><th>Proxy-flipped RHAE</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>No audit</td><td>1.000</td><td>0.000</td><td>fast when the shortcut holds</td></tr>
+          <tr><td>Audit + repair</td><td>0.694</td><td>0.391</td><td>worthwhile only above 0.4389 flip probability</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="callout blue">
-      <p>The soup scores <strong>0.506</strong> on unseen s1–s4, above the best individual seed (0.491) and the 3-seed mean (0.440). Eliminates the seed-selection problem and lifts transfer for free.</p>
-    </div>
-
-    <h3 class="mt">Diversity-aware filtering</h3>
-    <p>
-      Capping how many winning episodes sharing the same behavioral trajectory we distill keeps the SFT data behaviorally diverse:
-    </p>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Seed</th><th>pass@1 without</th><th>pass@1 with filter</th><th>pass@8 Δ</th></tr></thead>
-        <tbody>
-          <tr><td>seed-2</td><td>0.491</td><td class="good">0.534</td><td class="good">+0.125</td></tr>
-          <tr><td>seed-3</td><td>0.416</td><td class="good">0.644</td><td class="good">+0.300</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Both metrics improve on both seeds — not a trade-off. Drop-in via <code>--diverse-filter</code>.</p>
-
-    <h3 class="mt">Capacity: 1.7B lifts the execution ceiling</h3>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Model</th><th>s3 2-door (unseen)</th><th>s4 2-mix (unseen)</th></tr></thead>
-        <tbody>
-          <tr><td>Qwen3-0.6B</td><td colspan="2" style="color:var(--ink-quiet)">fails to bootstrap</td></tr>
-          <tr><td>Qwen3.5-0.8B</td><td>0.944</td><td>0.725</td></tr>
-          <tr><td class="hi">Qwen3-1.7B</td><td>0.950</td><td class="good"><strong>0.831</strong></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Capacity helps exactly where execution binds (s4), and is flat where decomposition already transfers (s3). Consistent with the mechanism.</p>
-  </div>
-</section>
-
-<!-- ===== FRONTIER ===== -->
-<section id="frontier" class="band">
-  <div class="container narrow">
-    <div class="kicker">Extending the env (exploratory)</div>
-    <h2>Each new mechanic targets a different faculty</h2>
-    <p>
-      One thing the knob-based design makes possible: you can add a new mechanic and ask precisely which faculty it stresses. We added six. Three were learnable; three exposed hard limits. The oracle-execution probe separates them cleanly.
-    </p>
-
-    <h3>The learnable ones</h3>
-    <p>Fog (partial observation), drift (controls reshuffle every 6 steps), and AND-gates (need a full set of keys) all bootstrap well with a warm-started prior. The subgoal proposal recipe is robust to these stresses — the model adapts.</p>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Mechanic</th><th>pass@1</th><th>What it stresses</th></tr></thead>
-        <tbody>
-          <tr><td>⑤ Fog (partial obs, warm start)</td><td class="good">0.64</td><td>exploration under hidden state — cold start stalls at 0.08</td></tr>
-          <tr><td>④ Drift (reshuffled controls)</td><td class="good">0.77</td><td>non-stationarity — controls change mid-episode</td></tr>
-          <tr><td>③ AND-gates (set-valued keys)</td><td class="good">0.68</td><td>richer prerequisites — collect all before you can proceed</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 class="mt">The hard ones — and what they reveal</h3>
-    <p>
-      Irreversibility, crafting, and hazards all stall or fail to bootstrap. But the <em>reason</em> is different in each case. That's what makes them interesting as diagnostics.
-    </p>
-    <p>
-      The oracle-execution probe makes this visible. Hand the model perfect navigation to its own proposed waypoints. If performance recovers, the failure was navigational. If it doesn't, the plan itself was wrong.
-    </p>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Mechanic</th><th>Normal</th><th>Oracle-exec</th><th>Diagnosis</th></tr></thead>
-        <tbody>
-          <tr><td>② Irreversibility</td><td>0.34</td><td>0.33 <em>(no rescue)</em></td><td class="hi">Planning — model proposes the trap (16–22% of episodes)</td></tr>
-          <tr><td>E1 Crafting</td><td>0.20</td><td>0.38</td><td>Sequencing — model knows the ingredients, mis-orders them</td></tr>
-          <tr><td>E8 Hazards</td><td>0.26</td><td>0.44</td><td>Navigation — model steps onto lethal tiles; routing rescues it</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="finding">
-      <div class="finding-label">Irreversibility flips the bottleneck</div>
-      <p>Under reversible mechanics, oracle-exec rescues nearly everything — 2-door goes 0.744 → 0.950. Under irreversibility on the same 1-door task, oracle-exec provides <strong>zero lift</strong>. The model is walking into a trap it chose. Perfect execution just gets it there faster. This is the clearest demonstration that the failure mode depends on the mechanic, not the model — and that the env can tell them apart.</p>
+      <p><strong>Replicated model-free mechanism test:</strong> N=500 at seed 0 and seed 777 produced the same summary. The executor and intervention request are scripted; the two-feature policy contains the causal feature by construction. This is not an LLM, PPO, TTRL, GRPO, or LoRA result.</p>
     </div>
   </div>
 </section>
 
-<!-- ===== CAVEATS ===== -->
-<section id="caveats" class="band band-dark">
+<section id="credit" class="band band-tint">
   <div class="container narrow">
-    <div class="kicker">Honest caveats</div>
-    <h2>What this pilot can and cannot claim</h2>
-
-    <ul class="steps">
-      <li>
-        <div class="step-num" style="background:rgba(164,114,240,.3);color:#d9c8fa;">!</div>
-        <div class="step-body">
-          <strong style="color:#f0eaff;">Small n.</strong>
-          <p>Most claims rest on n=2–3 seeds. The 1.8× headline is reproduced on two seeds, which is meaningful, but far from a rigorous statistical claim. The ceiling is still seed-variable.</p>
-        </div>
-      </li>
-      <li>
-        <div class="step-num" style="background:rgba(164,114,240,.3);color:#d9c8fa;">!</div>
-        <div class="step-body">
-          <strong style="color:#f0eaff;">Synthetic environment.</strong>
-          <p>GridRule captures the demands we care about in a convenient package. We cannot claim the findings transfer to visual, high-dimensional, or open-ended settings.</p>
-        </div>
-      </li>
-      <li>
-        <div class="step-num" style="background:rgba(164,114,240,.3);color:#d9c8fa;">!</div>
-        <div class="step-body">
-          <strong style="color:#f0eaff;">Frontier mechanics at n=1.</strong>
-          <p>The three-failure-mode taxonomy is a hypothesis to replicate, not an established result.</p>
-        </div>
-      </li>
-    </ul>
-
-    <p style="color:#c8bde8;margin-top:1.8rem;">
-      None of these caveats undermine the core finding: self-proposed coordinate subgoals, in this setting, reliably improve transfer and compositional generalization, replicated at n=2. The pilot is a starting point. We share it to invite scrutiny and collaboration.
+    <div class="kicker">Structural credit · model-free probes</div>
+    <h2>Credit the intervention, not the milestone</h2>
+    <p>
+      The original FrontierGrid Credit-DAG probe represents a decomposition as typed relations: alternatives (<code>OR</code>), jointly necessary prerequisites (<code>AND</code>), order (<code>SEQ</code>), guards, options, and switches. It forks matched continuations from the same boundary and asks which edit changed downstream return. ContractForge now realizes <code>OR</code>, all four <code>AND</code> coalitions, <code>SEQ</code>, and <code>GUARD</code> through legal episode actions.
     </p>
-  </div>
-</section>
 
-<!-- ===== TAKEAWAYS ===== -->
-<section id="takeaways" class="band">
-  <div class="container narrow">
-    <div class="kicker">Takeaways</div>
-    <h2>What this pilot suggests</h2>
+    <div class="credit-flow" aria-label="Credit-DAG evaluation flow">
+      <div><span>1</span>Typed graph</div>
+      <b>→</b>
+      <div><span>2</span>Matched boundary fork</div>
+      <b>→</b>
+      <div><span>3</span>Visible outcome</div>
+      <b>→</b>
+      <div><span>4</span>Certified pair or abstain</div>
+    </div>
 
-    <div class="result-grid">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Probe</th><th>Naive local signal</th><th>Matched causal result</th></tr></thead>
+        <tbody>
+          <tr><td>Wrong proof / contaminant</td><td>achieved 100%; positive hindsight</td><td class="bad-text">OR advantage −0.667 each</td></tr>
+          <tr><td>Claim / counterexample</td><td>both progress +0.15</td><td>OR advantages −1 vs +2; gap 3.0</td></tr>
+          <tr><td>Exact-gate prerequisites</td><td>each alone has utility 0</td><td>joint interaction 1; Shapley 0.5 each</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mt">Short rollouts are missing information—not zero reward</h3>
+    <p>
+      A second N=500 horizon sweep, independently repeated with another seed configuration, asked how long a continuation must run before its ordering is trustworthy. Hindsight never recovered the correct poisoned-milestone ranking. Strict outcome intervals reached full certification only at horizon 18 for evidence choices and 22 for milestones.
+    </p>
+
+    <div class="result-grid credit-results">
       <div class="result-card rc-accent">
-        <div class="rc-label">On the env</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">Knobs that isolate difficulty sources + an oracle-execution probe let you ask <em>which faculty is binding</em>, not just whether the model passes or fails.</p>
-      </div>
-      <div class="result-card rc-good">
-        <div class="rc-label">On decomposition</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">Self-proposed coordinate subgoals produce a <strong>transferable planning skill</strong> — trained on 1-gate, generalizes to 3-gate. The planning transfers further than the navigation.</p>
+        <div class="rc-label">Evidence pair certificates</div>
+        <div class="rc-num">25–30%</div>
+        <div class="rc-desc">fewer actions than ranking the full sibling group</div>
       </div>
       <div class="result-card rc-blue">
-        <div class="rc-label">On failure modes</div>
-        <p style="font-size:1rem;color:var(--ink-soft);margin:0;">The failure mode is a <strong>property of the mechanic</strong>, not the model. Irreversibility breaks planning; hazards break navigation; crafting breaks sequencing. The env separates them.</p>
+        <div class="rc-label">Milestone pair certificates</div>
+        <div class="rc-num">46–54%</div>
+        <div class="rc-desc">fewer actions than ranking the full sibling group</div>
       </div>
+    </div>
+
+    <div class="protocol-rule">
+      <div><strong>Provisional score</strong><span>allocate search budget</span></div>
+      <div><strong>Certified pair</strong><span>eligible for a learning update</span></div>
+      <div><strong>Unresolved</strong><span>abstain</span></div>
+    </div>
+
+    <div class="callout blue">
+      <p><strong>Scope:</strong> the FrontierGrid probes use deterministic scripted continuations with privileged item identities. ContractForge adds a two-feature pairwise update, but no LLM generates the graph, intervention, or policy behavior, and no language-model weights are updated.</p>
+    </div>
+  </div>
+</section>
+
+<section id="limits" class="band">
+  <div class="container narrow">
+    <div class="kicker">Evidence ledger</div>
+    <h2>What is established, diagnostic, and still designed</h2>
+
+    <div class="status-list">
+      <article>
+        <span class="evidence-chip ev-heldout">Held-out · small n</span>
+        <div><h3>GridRule causal toggle and safe-demo cure</h3><p>Two training seeds and two disjoint evaluation seeds for the final pass@8 table. Strong within this environment; not yet a broad statistical claim.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-heldout">Replicated · 2 seeds</span>
+        <div><h3>Sparse self-reward parity</h3><p>Competitive with outcome reward, slower and more variable. Dense and blended variants did not improve the conclusion.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-diagnostic">Single trace</span>
+        <div><h3>FrontierGrid model behavior and TTE repair</h3><p>Useful failure anatomy, not a model ranking. Broader models, seeds, stages, and budgets remain to be run.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-replicated">Scripted · N=500</span>
+        <div><h3>FrontierGrid Credit-DAG and budget probes</h3><p>Mirrored procedural instances with a privileged scripted executor. The original exact-gate AND result is a controlled synthetic boundary microprobe.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-replicated">N=500 × 2</span>
+        <div><h3>ContractForge structural and active-credit probes</h3><p>Legal-action OR, AND, SEQ, and GUARD comparisons plus a matched surface swap. The executor, intervention, symbolic memory, and two-feature learner are privileged mechanism tests.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-design">Not implemented</span>
+        <div><h3>LLM-facing Credit-DAG learning</h3><p>An LLM-proposed graph and field-preserving intervention, learned pair scheduler, stochastic executor, token-span credit, and LoRA update are next tests—not current results.</p></div>
+      </article>
+      <article>
+        <span class="evidence-chip ev-design">Artifact scope</span>
+        <div><h3>Research snapshot, not a packaged release</h3><p>The branches commit environment code, probes, and synthesized reports. A complete portable bundle of the main branch’s raw run artifacts is not yet published.</p></div>
+      </article>
     </div>
 
     <div class="callout mt">
-      <p>The thing I find most interesting isn't the pass@1 numbers — it's that the env can tell the difference between a model that doesn't know where to go and a model that knows exactly where to go but can't get there. That distinction seems worth building tools around.</p>
+      <p>The broad lesson is narrower than “more reward fixes reasoning.” In these environments, the useful signal often lives at a specific commitment boundary. Data collection, evaluation, and credit assignment all improve when they preserve that boundary instead of averaging it away.</p>
     </div>
 
     <div class="hero-links mt">
-      <a class="pill" href="mailto:shizhuo2@illinois.edu">Discussion welcome ↗</a>
+      <a class="pill" href="environment.html">Open the interactive design ↗</a>
+      <a class="pill pill-ghost" href="mailto:shizhuo2@illinois.edu">Discussion welcome ↗</a>
       <a class="pill pill-ghost" href="/">← Back to Dylan Zhang</a>
     </div>
   </div>
@@ -545,19 +459,10 @@
 
 <footer class="footer">
   <p>
-    <strong style="color:#d9c8fa;">GridRule: a pilot study</strong> — Dylan Zhang, UIUC ALTA Lab, June 2026.
-    Part of an ongoing exploration of interactive environments for small-model post-training.
-    Discussion very welcome — <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+    <strong>GridRule research snapshot</strong> — Dylan Zhang, UIUC ALTA Lab, July 2026.<br />
+    An ongoing study of interactive environments, irreversible decisions, and post-training credit.
   </p>
 </footer>
 
-<script>
-// Intersection observer for figure fade-in
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
-}, { threshold: 0.08 });
-document.querySelectorAll('.fig').forEach(f => obs.observe(f));
-</script>
-<script src="demo.js"></script>
 </body>
 </html>
