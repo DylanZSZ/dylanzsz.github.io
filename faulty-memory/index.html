@@ -4,10 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Useful Memories Become Faulty When Continuously Updated by LLMs</title>
-<meta name="description" content="LLM agents that consolidate experience into textual memory often make their memory worse over time. We trace the failure to the consolidation step itself." />
+<meta name="description" content="LLM agents that consolidate experience into textual memory can lose utility even when prior memory is hidden during abstraction, compound that loss across updates, and make memory worse over time—even in stationary worlds." />
 
 <meta property="og:title" content="Useful Memories Become Faulty When Continuously Updated by LLMs" />
-<meta property="og:description" content="LLM agents that consolidate experience into textual memory often make their memory worse over time. We trace the failure to the consolidation step itself." />
+<meta property="og:description" content="LLM agents that consolidate experience into textual memory can lose utility even when prior memory is hidden during abstraction, compound that loss across updates, and make memory worse over time—even in stationary worlds." />
 <meta property="og:type" content="article" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
     <ul class="topnav-links">
       <li><a href="#tldr">TL;DR</a></li>
       <li><a href="#headline">Headline</a></li>
-      <li><a href="#stream">Streaming&nbsp;decline</a></li>
+      <li class="topnav-new-item"><a class="topnav-new" href="#evidence" aria-label="What's new: PropWorld and four new experiments">What&rsquo;s new</a></li>
       <li><a href="#why">Why it breaks</a></li>
       <li><a href="#gallery">Examples</a></li>
       <li><a href="#zoo">Zoo</a></li>
@@ -44,7 +44,7 @@
     <aside class="disclaimer disclaimer-hero">
       <div class="disclaimer-label">A note before you read</div>
       <p>
-        I'm new to this area and just sharing what I found while poking at it. The framing here is mine, the experiments are real, but I might be missing context, conflating things, or just plain wrong on some points. Treat this less as a verdict and more as a starting conversation. Discussions very welcome &mdash; reach out at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
+        We're new to this area and just sharing what we found while poking at it. The framing here is ours, the experiments are real, but we might be missing context, conflating things, or just plain wrong on some points. Treat this less as a verdict and more as a starting conversation. Discussions very welcome &mdash; reach out at <a href="mailto:shizhuo2@illinois.edu">shizhuo2@illinois.edu</a>.
       </p>
     </aside>
 
@@ -75,7 +75,8 @@
       <ul class="tldr-list">
         <li>The popular recipe of <strong>distill experience &rarr; store as text &rarr; rewrite later</strong> is <em>not</em> a reliable engine of self-improvement.</li>
         <li>After streaming ground-truth solutions through a consolidation loop, GPT-5.4 fails on <strong>54&nbsp;%</strong> of ARC-AGI problems it had previously solved with zero memory.</li>
-        <li>The same trajectories yield different memories under different schedules &mdash; the failure is in the <em>rewrite step</em>, not the data.</li>
+        <li>The same trajectories yield different memories under different update rules: a residual remains even after update-time conditioning and rewriting are removed, high-frequency conditioning can add to it, and in-place rewriting is associated with another penalty.</li>
+        <li>New stress tests expose the same instability in a stationary synthetic world, across seven memory systems and two backbones, and in model-directed strategy buffers routed through OpenCode.</li>
         <li>An <strong>episodic-only</strong> agent &mdash; one that <em>selectively</em> retains and deletes raw rollouts, with abstraction disabled &mdash; matches or beats every consolidator we tested. The point is curated raw evidence, not an unfiltered firehose.</li>
       </ul>
     </div>
@@ -112,7 +113,7 @@
       <img src="figures/arc_19type_gpt54.png" alt="ARC-AGI Stream: GPT-5.4 accuracy collapses from 100% to 54% as memory consolidates from ground truth.">
       <figcaption>
         <strong>Solving the same problem twice, the second time worse.</strong>
-        Without memory: 100&nbsp;%. After consolidating <em>from the ground-truth solutions of those very problems</em>, GPT-5.4 drops to <strong>54&nbsp;%</strong>. The trajectories are perfect; the rewrite step is what breaks.
+        Without memory: 100&nbsp;%. After consolidating <em>from the ground-truth solutions of those very problems</em>, GPT-5.4 drops to <strong>54&nbsp;%</strong>. The trajectories are perfect; the loss enters during memory construction and maintenance.
       </figcaption>
     </figure>
 
@@ -151,9 +152,445 @@
 </section>
 
 <!-- =============================================================== -->
+<section id="evidence" class="band band-evidence">
+  <div class="container">
+    <div class="evidence-intro">
+      <div class="kicker">What&rsquo;s new · a controlled benchmark + four experiments</div>
+      <h2>Take away the easy excuses.<br/>The instability remains.</h2>
+      <p class="lede">
+        PropWorld first makes the target knowledge finite and stationary. Experiments 1&ndash;2 then dissect the ARC streaming loop; Experiment 3 widens the methods and backbone; Experiment 4 lets frontier models direct the buffer through OpenCode. The result is not one monolithic failure: loss can remain when update-time history is hidden, change when prior abstractions are restored, deepen under rewriting, or emerge when redundant records crowd retrieval.
+      </p>
+    </div>
+
+    <article id="propworld" class="evidence-block">
+      <header class="evidence-head">
+        <div class="evidence-num evidence-num-label" aria-hidden="true">PW</div>
+        <div>
+          <div class="evidence-tag">Controlled benchmark · clean evaluation</div>
+          <h3>PropWorld keeps every fact fixed. Utility still falls.</h3>
+        </div>
+      </header>
+
+      <div class="evidence-copy">
+        <p>
+          PropWorld is a synthetic crafting benchmark designed to make memory failure auditable. Each episode names an opaque environment, describes an item with nonce-valued attributes, and asks the agent to choose a tool. In Base-1, eight environments each hide one fixed eight-value lookup table: <strong>64 mappings total</strong>. One correct lookup ends the episode; nothing in the world drifts.
+        </p>
+        <p>
+          To remove upstream trajectory errors, each memory updater receives a correctly solved interaction and the correct action&mdash;but never the hidden rule table. Evaluation freezes memory and reuses the same clean 64-item exam, built from held-out item combinations whose values appeared in training. A rise-then-fall curve therefore points to how persistent text is maintained or retrieved, not to a changing task.
+        </p>
+      </div>
+
+      <div class="propworld-primer" role="list" aria-label="PropWorld experimental design">
+        <div role="listitem">
+          <span class="primer-label">World</span>
+          <strong>8 &times; 8 = 64</strong>
+          <p>Opaque environments, fixed value-to-tool mappings.</p>
+        </div>
+        <div role="listitem">
+          <span class="primer-label">Teaching signal</span>
+          <strong>Solved episodes</strong>
+          <p>Correct trajectory and action; no hidden rule table.</p>
+        </div>
+        <div role="listitem">
+          <span class="primer-label">Evaluation</span>
+          <strong>Frozen + clean</strong>
+          <p>The same coverage exam at every checkpoint.</p>
+        </div>
+      </div>
+
+      <div class="collapse-grid" role="list" aria-label="PropWorld clean-evaluation accuracy declines">
+        <div class="collapse-card" role="listitem">
+          <div class="collapse-method">Dynamic Cheatsheet</div>
+          <div class="collapse-kind">Full rewrite · 12-env suite</div>
+          <div class="collapse-score"><span>.812</span><b>&rarr;</b><span>.229</span></div>
+          <div class="collapse-steps">update 30 <span>to</span> update 48</div>
+          <div class="collapse-drop">58.3-point drop</div>
+        </div>
+        <div class="collapse-card collapse-card-featured" role="listitem">
+          <div class="collapse-method">LangMem</div>
+          <div class="collapse-kind">Semantic top-10 · Base1</div>
+          <div class="collapse-score"><span>.609</span><b>&rarr;</b><span>.203</span></div>
+          <div class="collapse-steps">update 36 <span>to</span> update 144</div>
+          <div class="collapse-drop">40.6-point drop</div>
+        </div>
+        <div class="collapse-card" role="listitem">
+          <div class="collapse-method">ReasoningBank</div>
+          <div class="collapse-kind">Single-card retrieval · Base1</div>
+          <div class="collapse-score"><span>.547</span><b>&rarr;</b><span>.250</span></div>
+          <div class="collapse-steps">update 48 <span>to</span> update 192</div>
+          <div class="collapse-drop">29.7-point drop</div>
+        </div>
+      </div>
+
+      <div class="evidence-finding">
+        <div class="evidence-finding-stat">84&rarr;573</div>
+        <div>
+          <div class="evidence-finding-label">The world stayed fixed. The bank kept multiplying.</div>
+          <p>
+            LangMem's bank grew from <strong>84 records at update 48 to 573 at update 768</strong> for only 64 fixed mappings. The documented interpretation is semantic crowding: loose deduplication can fill top-10 retrieval with near-neighbors, making the useful record harder to surface. This widens the failure model: full rewrites can alter what is stored, while append-and-update systems can also degrade how effectively stored text is consumed. Both can turn more maintained text into less usable knowledge.
+          </p>
+        </div>
+      </div>
+
+      <p class="evidence-note">
+        <strong>Scope.</strong> These are single-seed Qwen3.6-27B trajectories. LangMem and ReasoningBank use Base-1; Dynamic Cheatsheet comes from a separate fixed 12-environment mixed suite. The LangMem score curve stops at the last clean checkpoint, update 144: later checkpoints are excluded because the curator began returning repeated <code>GraphRecursionError</code> failures. The record-count diagnostic is reported separately through update 768. In a separate 20&nbsp;% corruption stress test, Letta fell from .812 to .375 while its matched clean run remained near .9.
+      </p>
+    </article>
+
+    <article id="attribution" class="evidence-block">
+      <header class="evidence-head">
+        <div class="evidence-num" aria-hidden="true">01</div>
+        <div>
+          <div class="evidence-tag">Experiment 1 · source attribution</div>
+          <h3>What remains after a blind write, what conditioning changes, and what rewriting adds.</h3>
+        </div>
+      </header>
+
+      <div class="evidence-copy">
+        <p>
+          PropWorld rules out drift and upstream trajectory error; the ARC controls now localize where a streamed update loses utility. The first result bundled several operations together, so a sharper control asks whether the previous abstraction must be allowed to shape the next one.
+        </p>
+      </div>
+
+      <blockquote class="control-question">
+        <span>Control requested</span>
+        <p>&ldquo;Can you stream the same batches but prevent the previous abstraction from conditioning the next update?&rdquo;</p>
+      </blockquote>
+
+      <div class="evidence-copy">
+        <p>
+          We replayed the <strong>same ARC batches in the same order</strong> and changed only what the consolidation step could see or modify. <em>Force</em> consolidates every batch; <em>Auto</em> decides whether to do so. The three conditions form a small causal ladder:
+        </p>
+      </div>
+
+      <div class="mechanism-grid" role="list" aria-label="Three possible sources of streamed memory degradation">
+        <div class="mechanism-card" role="listitem">
+          <span class="mechanism-num">01</span>
+          <h4>First-pass compression</h4>
+          <p>The current batch is grouped or abstracted incorrectly before memory history can matter.</p>
+        </div>
+        <div class="mechanism-card" role="listitem">
+          <span class="mechanism-num">02</span>
+          <h4>Cross-update conditioning</h4>
+          <p>Earlier, imperfect abstractions bias what the updater extracts from the next batch.</p>
+        </div>
+        <div class="mechanism-card" role="listitem">
+          <span class="mechanism-num">03</span>
+          <h4>Destructive rewriting</h4>
+          <p>Editing old entries in place repeatedly erodes distinctions that were once useful.</p>
+        </div>
+      </div>
+
+      <div class="mobile-scroll-hint" aria-hidden="true">Swipe the control design <span>&rarr;</span></div>
+      <div class="result-table evidence-table control-design-table" tabindex="0" role="region" aria-label="Scrollable streamed update control design">
+        <table aria-describedby="control-design-note">
+          <caption class="sr-only">Three controls that vary prior-memory visibility and edit permissions during streamed updates.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Condition</th>
+              <th scope="col">Prior store visible?</th>
+              <th scope="col">Old entries editable?</th>
+              <th scope="col">Update-side mechanisms retained</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>A</strong> · append-only, visible</td><td>Yes</td><td>No</td><td>First pass + conditioning</td></tr>
+            <tr><td><strong>B</strong> · append-only, blind</td><td>No</td><td>No</td><td>First pass; no update-time history or edit</td></tr>
+            <tr><td><strong>C</strong> · add + delete</td><td>Yes</td><td>Delete only</td><td>First pass + conditioning + pruning</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="control-design-note" class="table-note">
+        &ldquo;Blind&rdquo; applies only while deciding and writing the update. The accumulated store is still available to the solver at evaluation. A vs. B tests update-time conditioning; C vs. A tests deletion without permitting in-place edits.
+      </p>
+
+      <div class="mobile-scroll-hint" aria-hidden="true">Swipe for checkpoints <span>&rarr;</span></div>
+      <div class="result-table evidence-table attribution-table" tabindex="0" role="region" aria-label="Scrollable streamed update attribution results">
+        <table aria-describedby="attribution-table-note">
+          <caption class="sr-only">ARC-AGI success rate in percent for append-only visible, append-only blind, and add-delete controls.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Batch</th>
+              <th scope="col">Mode</th>
+              <th scope="col">Condition</th>
+              <th scope="col">Step 100</th>
+              <th scope="col">Step 200</th>
+              <th scope="col">Step 400</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Force</td><td>A · visible</td><td>48.0</td><td>54.0</td><td>50.0</td></tr>
+            <tr class="blind-row"><td>1</td><td>Force</td><td>B · blind</td><td>72.0</td><td>70.0</td><td class="result-best">70.0</td></tr>
+            <tr><td>1</td><td>Force</td><td>C · add + delete</td><td>62.0</td><td>62.0</td><td>64.0</td></tr>
+            <tr class="group-start"><td>1</td><td>Auto</td><td>A · visible</td><td>56.0</td><td>60.0</td><td>56.0</td></tr>
+            <tr class="blind-row"><td>1</td><td>Auto</td><td>B · blind</td><td>60.0</td><td>66.0</td><td class="result-best">66.0</td></tr>
+            <tr><td>1</td><td>Auto</td><td>C · add + delete</td><td>66.0</td><td>60.0</td><td>60.0</td></tr>
+            <tr class="batch-start"><td>8</td><td>Force</td><td>A · visible</td><td>60.0</td><td>58.0</td><td>56.0</td></tr>
+            <tr class="blind-row"><td>8</td><td>Force</td><td>B · blind</td><td>52.0</td><td>56.0</td><td class="missing-cell">&mdash;</td></tr>
+            <tr><td>8</td><td>Force</td><td>C · add + delete</td><td>58.0</td><td>58.0</td><td class="result-best">66.0</td></tr>
+            <tr class="group-start"><td>8</td><td>Auto</td><td>A · visible</td><td>58.0</td><td>68.0</td><td>58.0</td></tr>
+            <tr class="blind-row"><td>8</td><td>Auto</td><td>B · blind</td><td>56.0</td><td>54.0</td><td class="missing-cell">&mdash;</td></tr>
+            <tr><td>8</td><td>Auto</td><td>C · add + delete</td><td>62.0</td><td>64.0</td><td class="result-best">64.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="attribution-table-note" class="table-note">
+        Results from our original run: success rate (%), one 50-task evaluation per cell. We did not archive the original Line-E outputs; dashes mark values that were not available in that run.
+      </p>
+
+      <div class="attribution-findings" role="list" aria-label="Main findings from the streamed update controls">
+        <div class="attribution-finding" role="listitem">
+          <strong>+20 pt</strong>
+          <span>Conditioning cost at high frequency</span>
+          <p>At batch size 1, blindness ends 20 points above visible append-only in Force (70 vs. 50) and 10 points above it in Auto (66 vs. 56).</p>
+        </div>
+        <div class="attribution-finding" role="listitem">
+          <strong>6.6 pt</strong>
+          <span>Gap to the static code reference</span>
+          <p>The strongest reported streamed condition ends at 70.0, below per-task ground-truth code at 76.6 but almost level with the natural-language reference at 70.4.</p>
+        </div>
+        <div class="attribution-finding" role="listitem">
+          <strong>4 / 4</strong>
+          <span>Original-run deletion contrast</span>
+          <p>In our original run, C ends above visible A in every completed terminal comparison, by 4 to 14 points. This ordering does not hold in our fresh rerun.</p>
+        </div>
+      </div>
+
+      <div class="evidence-copy evidence-interpretation">
+        <p>
+          <strong>Conditioning is regime-dependent.</strong> In our original run, hiding history helps at every batch-1 checkpoint. At batch size 8, the sign reverses at both available checkpoints: by step 200, visible A leads blind B by 2 points in Force and 14 in Auto. Prior memory can therefore have both a cost and a benefit: it may bias a new abstraction, but it also tells the updater what already exists and where new material belongs. Our fresh rerun preserves the aggregate advantage of blind append-only, but not this exact per-cell ordering.
+        </p>
+        <p>
+          <strong>The residual is consistent with first-pass loss, not a clean estimate of it.</strong> B removes update-time conditioning and in-place edits, yet still sits 6.6 points below the static per-task code reference. But B also builds a much larger, more redundant store, so this control cannot separate first-pass compression error from representation and consumption-time interference. It is also only 0.4 points below the natural-language reference.
+        </p>
+        <p>
+          <strong>Recursive rewriting is the robust signal; deletion is run-dependent.</strong> Our original table puts deletion-only C above visible A in all four terminal comparisons, but our fresh rerun does not reproduce that ordering. Across the rerun's 12 arm-checkpoint cells, unrestricted rewrite is the lowest-scoring policy at 46.5, versus 55.3 for visible append-only, 60.0 for blind append-only, and 54.5 for add/delete. That pattern is consistent with an additional in-place-rewrite penalty; deletion-only C does not show the same endpoint loss in the original table. These are single evaluations, however, so pruning itself is not established as a general benefit.
+        </p>
+      </div>
+
+      <div class="evidence-finding evidence-finding-compact diagnostic-warning">
+        <div class="evidence-finding-stat">4.83&times;</div>
+        <div>
+          <div class="evidence-finding-label">A useful control, not a deployable memory policy.</div>
+          <p>
+            Without prior-store visibility, the updater cannot deduplicate or place new material. In our original batch-8 blind arm, we observed 4.83&times; as many entries and 3.81&times; as much text as visible append-only. We did not archive the underlying outputs, so we treat these ratios as descriptive rather than reproduced. The practical fix still needs visibility while limiting how strongly prior abstractions steer new ones.
+          </p>
+        </div>
+      </div>
+
+      <p class="evidence-note">
+        <strong>Scope.</strong> The displayed A/B/C table and store-size ratios come from our original run; we did not archive its outputs. We initially attributed the missing cells to context pressure, while our fresh single-evaluation rerun completes both batch-8 blind step-400 evaluations. That rerun supports the aggregate restricted-mutation advantage over free rewrite but differs in several individual cells. Small 2-point differences should not be over-read.
+      </p>
+    </article>
+
+    <article id="delayed-compression" class="evidence-block">
+      <header class="evidence-head">
+        <div class="evidence-num" aria-hidden="true">02</div>
+        <div>
+          <div class="evidence-tag">Experiment 2 · larger update batches</div>
+          <h3>Wider update batches improve the observed curve, but do not close the raw-evidence gap.</h3>
+        </div>
+      </header>
+
+      <div class="evidence-copy">
+        <p>
+          Experiment 1 suggests a direct intervention: show the consolidator more examples at once. Every run still lasts 400 update steps, so batch 32 processes four times as many episodes as batch 8 by the same checkpoint. We therefore lead with a matched-exposure comparison: batch 32 at step 100 versus batch 8 at step 400.
+        </p>
+      </div>
+
+      <div class="exposure-comparison" role="list" aria-label="Matched exposure comparison for batch size 8 and batch size 32">
+        <div class="exposure-card" role="listitem">
+          <span class="exposure-mode">Force · 3,200 episode exposures</span>
+          <div class="exposure-scores"><b>47.8</b><i>&rarr;</i><b>56.2</b></div>
+          <p>batch 8 @ update 400 <span>vs.</span> batch 32 @ update 100</p>
+          <strong class="exposure-gain">+8.4 points</strong>
+        </div>
+        <div class="exposure-card" role="listitem">
+          <span class="exposure-mode">Auto · 3,200 episode exposures</span>
+          <div class="exposure-scores"><b>39.8</b><i>&rarr;</i><b>58.6</b></div>
+          <p>batch 8 @ update 400 <span>vs.</span> batch 32 @ update 100</p>
+          <strong class="exposure-gain">+18.8 points</strong>
+        </div>
+      </div>
+
+      <div class="delayed-grid">
+        <div class="delayed-copy">
+          <div class="evidence-tag">Reported Auto consolidation count</div>
+          <h4>Wider batches change when Auto chooses to consolidate.</h4>
+          <p>
+            The supplied table reports cumulative <em>consolidate</em> decisions, not solved tasks. With batches of 32, Auto chose consolidation on 183 of 400 updates, compared with 74 of 400 for batches of 8.
+          </p>
+        </div>
+        <div>
+          <div class="mobile-scroll-hint delayed-scroll-hint" aria-hidden="true">Swipe the decision counts <span>&rarr;</span></div>
+          <div class="result-table compression-table">
+            <table>
+              <caption class="sr-only">Reported cumulative autonomous consolidation decisions by batch size.</caption>
+              <thead>
+                <tr><th scope="col">Batch</th><th scope="col">Through 100</th><th scope="col">Through 200</th><th scope="col">Through 400</th><th scope="col">Share</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>8</td><td>27</td><td>37</td><td>74</td><td>18.5%</td></tr>
+                <tr class="compression-featured"><td>32</td><td>45</td><td>76</td><td>183</td><td>45.8%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-copy evidence-interpretation">
+        <p>
+          The exposure-matched comparison puts batch 32 at update 100 against batch 8 at update 400: each has processed 3,200 episodes. Force is the clean batch-width contrast and is 8.4 points higher with the wider batch. Auto is 18.8 points higher, but that arm bundles batch width with the final prompt and trim configuration and is therefore descriptive rather than causal. Both wider-batch points use one quarter as many consolidation opportunities. The decision counts we reported are consistent with batch composition changing when Auto abstracts; more accurate task-type segmentation is a plausible interpretation, also suggested by Figures 3&ndash;4, but we did not measure it directly.
+        </p>
+        <p>
+          Wider batching is associated with better success at matched exposure; it does not erase the gap. At update 400, batch 32 reaches 59.0 in Force and 55.4 in Auto&mdash;still below the static per-task natural-language few-shot reference at 70.4 and ground-truth-code reference at 76.6. The association is consistent with a broader-evidence benefit, but the raw references remain the stronger ceiling.
+        </p>
+      </div>
+
+      <p class="evidence-note">
+        <strong>Protocol.</strong> Performance values are means over 10 evaluations. All batch widths run for 400 update steps; equal checkpoints are therefore not equal data exposure. Force is the cleaner batch-width contrast. The batch-32 Auto arm also uses the final <code>batch_io</code>, trim-after-decide configuration, so its contrast is an intervention bundle rather than a pure batch-size effect. We reported the 27/37/74 and 45/76/183 decision counts from the original run; we did not archive those logs, and our fresh rerun produces different counts.
+      </p>
+    </article>
+
+    <article id="breadth" class="evidence-block">
+      <header class="evidence-head">
+        <div class="evidence-num" aria-hidden="true">03</div>
+        <div>
+          <div class="evidence-tag">Experiment 3 · seven systems · added backbone</div>
+          <h3>Changing the method or model changes where memory breaks—not whether it can.</h3>
+        </div>
+      </header>
+
+      <div class="evidence-copy">
+        <p>
+          We extended the original benchmark comparison to seven text-memory systems and added Claude Sonnet&nbsp;5 alongside GPT-5.4-mini. Each cell below is the largest fall from an earlier checkpoint to a later one—not an endpoint score. Every memory family has a material drawdown somewhere, but its vulnerability depends on the task, update rule, and backbone.
+        </p>
+      </div>
+
+      <div class="mobile-scroll-hint" aria-hidden="true">Swipe to compare <span>&rarr;</span></div>
+      <div class="result-table evidence-table" tabindex="0" role="region" aria-label="Scrollable text-memory benchmark results">
+        <table aria-describedby="breadth-table-note">
+          <caption class="sr-only">Maximum chronological drawdown by memory system, benchmark, and backbone.</caption>
+          <thead>
+            <tr>
+              <th rowspan="2" scope="col">Memory</th>
+              <th colspan="2" scope="colgroup">AppWorld</th>
+              <th colspan="2" scope="colgroup">WebShop</th>
+              <th rowspan="2" scope="col">ScienceWorld<br/><span class="th-sub">success / raw score<br/>GPT-5.4-mini</span></th>
+            </tr>
+            <tr>
+              <th scope="col">GPT-5.4-mini</th>
+              <th scope="col">Sonnet&nbsp;5</th>
+              <th scope="col">GPT-5.4-mini</th>
+              <th scope="col">Sonnet&nbsp;5</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>LangMem</td><td>14</td><td>10</td><td class="worst-cell">21.1<span class="worst-mark">&dagger;</span></td><td>0</td><td class="worst-cell">20 / 28.9<span class="worst-mark">&dagger;</span></td></tr>
+            <tr><td>Mem0 v3</td><td>6</td><td class="worst-cell">20<span class="worst-mark">&dagger;</span></td><td>9.0</td><td>2.6</td><td>10 / 19.6</td></tr>
+            <tr><td>ProPlay</td><td>24</td><td>6</td><td>10.7</td><td>0.6</td><td>0 / 0</td></tr>
+            <tr><td>ACE</td><td class="worst-cell">50<span class="worst-mark">&dagger;</span></td><td>10</td><td>17.6</td><td class="worst-cell">7.6<span class="worst-mark">&dagger;</span></td><td>6 / 7.9</td></tr>
+            <tr><td>AWM</td><td>14</td><td>4</td><td>6.4</td><td>3.3</td><td>6 / 13.6</td></tr>
+            <tr><td>Letta</td><td>12</td><td>12</td><td>8.5</td><td>0.9</td><td>14 / 20.1</td></tr>
+            <tr><td>Dynamic Cheatsheet</td><td>20</td><td>14</td><td>18.7</td><td>&mdash;</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="breadth-table-note" class="table-note">
+        Maximum drawdown is <em>D = max<sub>i&lt;j</sub>(s<sub>i</sub> &minus; s<sub>j</sub>)</em>; larger is worse. AppWorld reports strict pass-rate points, WebShop native-reward points, and ScienceWorld success-rate / raw-score points. <span class="worst-mark">&dagger;</span> marks the largest drawdown in each column. Values are recomputed from the released checkpoint curves; unrecoverable Dynamic Cheatsheet cells are left blank.
+      </p>
+
+      <div class="evidence-copy evidence-interpretation">
+        <p>
+          Swapping the backbone reshuffles the failure: LangMem's WebShop drawdown moves from 21.1 points with GPT to zero with Sonnet, while Mem0's AppWorld drawdown moves from 6 to 20. Memory form is not a universal shield either. ProPlay's abstract procedure graph has zero drawdown because it improves throughout the ScienceWorld shortcut stream, but ACE still loses 50 points on AppWorld. Collapse is an interaction among <em>what memory stores, how it updates, the experience order, and the task</em>.
+        </p>
+      </div>
+
+      <p class="evidence-note">
+        <strong>Protocol.</strong> Each checkpoint reuses a fixed 50-task evaluation set. Rollout, memory construction, and evaluation use the same backbone at temperature zero, thinking disabled, and a 1,024-token output limit. Sonnet/Letta has no AppWorld N=200 point because its 128K context filled. ScienceWorld counts hosted-model error rows as zero in its released table and contains 10/50 train/evaluation description overlaps, so treat its magnitudes as stress-test evidence rather than a clean generalization estimate.
+      </p>
+
+      <div class="arc-drawdown">
+        <div class="arc-drawdown-copy">
+          <div class="evidence-tag">ARC-AGI Stream · provisional extension</div>
+          <h4>A second worksheet reports the same shape on ARC—but the underlying curves were not archived.</h4>
+          <p>Reported peak-to-later drawdown, in accuracy points:</p>
+        </div>
+        <div class="drawdown-grid" role="list" aria-label="ARC-AGI Stream accuracy drawdown by method">
+          <div role="listitem"><span>LangMem</span><strong>8 pt</strong></div>
+          <div role="listitem"><span>Letta</span><strong>8 pt</strong></div>
+          <div role="listitem"><span>ProPlay</span><strong>22 pt</strong></div>
+          <div role="listitem"><span>Mem0 v3</span><strong>6 pt</strong></div>
+        </div>
+      </div>
+      <p class="table-note provenance-note">
+        These four ARC values are included for completeness but excluded from the headline cross-method claim: the released archive does not contain the checkpoint curves needed to reproduce them.
+      </p>
+    </article>
+
+    <article id="opencode" class="evidence-block">
+      <header class="evidence-head">
+        <div class="evidence-num" aria-hidden="true">04</div>
+        <div>
+          <div class="evidence-tag">Experiment 4 · model-directed buffer</div>
+          <h3>Let the model decide what the buffer keeps. The trajectory is still non-monotonic.</h3>
+        </div>
+      </header>
+
+      <div class="evidence-copy">
+        <p>
+          Through a stateless OpenCode runner, each model receives its current textual strategy buffer plus ground-truth ARC-AGI solutions, then returns structured <em>retain, merge, or drop</em> updates. Only that buffer crosses otherwise fresh sessions. We freeze its snapshots and rescore the same 50 evaluation tasks at 11 checkpoints from 0 to 800 training exposures. Every trajectory contains a running-peak-to-later-trough loss of at least <strong>10 points</strong>.
+        </p>
+      </div>
+
+      <p id="opencode-table-note" class="table-note">
+        Counts are tasks solved out of 50. Drawdown is the largest chronological loss from a running high to a later checkpoint. The strict evaluation reads frozen buffer snapshots and never mutates them.
+      </p>
+
+      <div class="mobile-scroll-hint" aria-hidden="true">Swipe for checkpoints <span>&rarr;</span></div>
+      <div class="result-table evidence-table opencode-table" tabindex="0" role="region" aria-label="Scrollable OpenCode ARC-AGI Stream trajectory drawdowns">
+        <table aria-describedby="opencode-table-note">
+          <caption class="sr-only">Maximum chronological drawdown and endpoint accuracy for five model-directed strategy-buffer trajectories.</caption>
+          <thead>
+            <tr>
+              <th scope="col">OpenCode model configuration</th>
+              <th scope="col">Drawdown</th>
+              <th scope="col">Earlier high</th>
+              <th scope="col">Later low</th>
+              <th scope="col">At 800</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>GPT-5.5 <span class="model-mode">low reasoning</span></td><td class="drop-cell">18 pt</td><td>40 / 50 <span class="step-tag">@ 8</span></td><td>31 / 50 <span class="step-tag">@ 32, 64</span></td><td>36 / 50</td></tr>
+            <tr><td>Claude Sonnet 5 <span class="model-mode">default</span></td><td class="drop-cell">14 pt</td><td>29 / 50 <span class="step-tag">@ 64</span></td><td>22 / 50 <span class="step-tag">@ 800</span></td><td>22 / 50</td></tr>
+            <tr><td>Gemini 3.1 Pro <span class="model-mode">default</span></td><td class="drop-cell">10 pt</td><td>24 / 50 <span class="step-tag">@ 256, 400</span></td><td>19 / 50 <span class="step-tag">@ 512</span></td><td>23 / 50</td></tr>
+            <tr><td>GLM-5.2 <span class="model-mode">non-thinking</span></td><td class="drop-cell">14 pt</td><td>18 / 50 <span class="step-tag">@ 64</span></td><td>11 / 50 <span class="step-tag">@ 400</span></td><td>22 / 50</td></tr>
+            <tr><td>DeepSeek-V4 Pro <span class="model-mode">default</span></td><td class="drop-cell">22 pt</td><td>20 / 50 <span class="step-tag">@ 64</span></td><td>9 / 50 <span class="step-tag">@ 400</span></td><td>19 / 50</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="evidence-finding evidence-finding-compact">
+        <div class="evidence-finding-stat">5 / 5</div>
+        <div>
+          <div class="evidence-finding-label">Every trajectory has a double-digit drawdown.</div>
+          <p>
+            Some models recover: GLM-5.2 later surpasses its earlier high, and DeepSeek nearly returns to it. Sonnet ends at its trough. The careful claim is therefore <strong>instability, not universal irreversible collapse</strong>. Endpoint-only evaluation would hide most of it.
+          </p>
+        </div>
+      </div>
+
+      <p class="evidence-note">
+        <strong>Scope.</strong> One trajectory seed; one fixed 50-task evaluation set; no confidence intervals. OpenCode is a tool-disabled transport wrapper here, not a tool-using coding agent. This is also not a maximum-budget or reasoning-matched comparison: the run pins GPT-5.5 to low reasoning, GLM-5.2 to non-thinking, and uses provider-default reasoning for the other arms. All arms share an 8,192-token solve-output cap.
+      </p>
+    </article>
+  </div>
+</section>
+
+<!-- =============================================================== -->
 <section id="schedule" class="band band-tint">
   <div class="container">
-    <div class="kicker">It's the rewrite, not the data</div>
+    <div class="kicker">It's the update rule, not the data</div>
     <h2>The same trajectories produce different memories<br/>depending on how you serve them.</h2>
 
     <p>
@@ -183,7 +620,7 @@
         <strong>Confused.</strong> Pooling heterogeneous tasks into one abstraction step invites cross-family confusion: lessons from Pick&Place leak into Pick-Clean-Place.
       </p>
       <p class="schedule-readout" data-for="stream" hidden>
-        <strong>Worst.</strong> Early abstractions <em>anchor</em> later rewrites. Small errors in segmentation or emphasis become context for the next consolidation pass. Mistakes compound. This is exactly the regime real continual-learning agents operate in.
+        <strong>Worst.</strong> Early abstractions <em>anchor</em> later updates. Small errors in segmentation or emphasis become context for the next consolidation pass. Mistakes compound. This is exactly the regime real continual-learning agents operate in.
       </p>
     </div>
 
@@ -204,10 +641,10 @@
 <!-- =============================================================== -->
 <section id="why" class="band">
   <div class="container">
-    <div class="kicker">Three failure modes</div>
-    <h2>Why does the rewrite go wrong?</h2>
+    <div class="kicker">Three observed failure modes</div>
+    <h2>What does failed consolidation look like?</h2>
     <p>
-      We isolate three mechanisms. Each one turns the consolidation loop from accumulation into lossy rewriting.
+      The controls above separate update-side contributors and expose a residual confound. Here are three recurring forms the damaged memory takes: misgrouping, interference, and overfit.
     </p>
 
     <div class="failure-list">
@@ -222,7 +659,7 @@
               Before abstracting, the consolidator decides <em>which episodes belong together</em>. When forced to consolidate every step, it pools episodes that share little underlying structure.
             </p>
             <p class="failure-evidence">
-              Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. The forced rewrite overrides it.</em>
+              Under forced consolidation on ARC-AGI Stream, the model frequently combines memory entries across distinct problem classes. When given autonomy, it eventually converges to a clean episodic store covering each of the 6 problem types &mdash; but only after 568 examples have elapsed. <em>The capacity to segment is there. High-frequency consolidation overrides it.</em>
             </p>
 
             <div class="memory-card">
@@ -910,9 +1347,9 @@
     <h2>So &mdash; what should you build?</h2>
     <ol class="big-ol">
       <li><strong>Treat raw episodes as first-class evidence.</strong> Don't compress them away by default. Today's solvers can already use them via in-context learning.</li>
-      <li><strong>Make abstraction selective and gated.</strong> Not every trajectory needs to become a "lesson". Most should not.</li>
+      <li><strong>Make abstraction selective, batched, and gated.</strong> Give the updater enough neighboring evidence to segment task types, then invoke it sparingly.</li>
       <li><strong>Decouple the episodic and schema-forming roles.</strong> A fast episodic buffer + a slow, gated abstract store dominates a single mandatory rewrite loop.</li>
-      <li><strong>Stress-test against scale.</strong> A memory system that's good at 8 examples and bad at 128 is not a memory system. It's a prompt with a leak.</li>
+      <li><strong>Stress-test update frequency as well as scale.</strong> Report the full curve, vary batch composition, and compare systems at matched experience exposure.</li>
       <li><strong>Always include an episodic-only baseline.</strong> If your distilled memory can't beat raw rollouts retrieved as in-context demos, the distillation isn't earning its keep.</li>
     </ol>
   </div>
@@ -923,7 +1360,7 @@
   <div class="container narrow">
     <h2>Continually rewritten memory is fragile.</h2>
     <p class="lede">
-      Persistent textual memory promised a path for LLM agents to improve after deployment without weight updates. Our results say: not yet. Continuously updated textual memory should be viewed not as a reliable engine of self-improvement, but as a fragile mechanism that can make <em>more experience lead to worse memory</em>.
+      Persistent textual memory promised a path for LLM agents to improve after deployment without weight updates. Our results say: not yet. Loss remains after update-time conditioning and in-place rewriting are removed; it can then change when prior abstractions condition later updates, deepen under in-place rewriting, or emerge when redundant records crowd retrieval. That residual is consistent with first-pass compression but is not cleanly separated from evaluation-time interference. From stationary synthetic worlds to seven memory systems, two backbone families, and model-directed strategy buffers, the same warning survives: more experience can produce <em>less usable memory</em>.
     </p>
     <p>
       Long-horizon agents will need both episodic and schematic memory. But until LLMs can decide <em>when</em> and <em>how</em> to consolidate, the safer default is to keep the evidence and abstract sparingly &mdash; or not at all.
