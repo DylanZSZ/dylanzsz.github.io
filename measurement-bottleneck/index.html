@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Measurement Is the Bottleneck of Auto-Research — Dylan Zhang</title>
+<meta name="description" content="After 8,298 trained candidates, the bottleneck was not generating ideas. It was finding a cheap, repeatable measurement that predicted which ideas would survive at scale." />
+<meta name="theme-color" content="#151029" />
+
+<link rel="canonical" href="https://dylanzsz.github.io/measurement-bottleneck/" />
+<meta property="og:title" content="Measurement Is the Bottleneck of Auto-Research" />
+<meta property="og:description" content="What problems are ready for autoresearch—and what problems are not? The boundary is a cheap, repeatable, target-valid evaluator." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dylanzsz.github.io/measurement-bottleneck/" />
+<meta property="article:published_time" content="2026-08-16" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to article</a>
+
+<nav class="topnav" aria-label="Article navigation">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#top"><span class="brand-mark" aria-hidden="true"></span> Measurement</a>
+    <ul class="topnav-links">
+      <li><a href="#case">The case</a></li>
+      <li><a href="#boundary">The boundary</a></li>
+      <li><a href="#landscape">Can / cannot</a></li>
+      <li><a href="#invert">The reframe</a></li>
+      <li><a href="#rules">Rules</a></li>
+    </ul>
+    <a class="home-link" href="/" aria-label="Back to Dylan Zhang's homepage">Dylan Zhang ↗</a>
+  </div>
+  <div class="reading-progress" aria-hidden="true"><span></span></div>
+</nav>
+
+<header id="top" class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <div class="eyebrow">Position piece · August 16, 2026</div>
+      <h1>Measurement is the bottleneck of <span>auto&#8209;research.</span></h1>
+      <p class="hero-sub">
+        We spent two months letting an agent invent post-training objectives, training <strong>8,298 candidates</strong>, and improving every part of the search loop. The hard part was never generating ideas. It was knowing which ideas were real.
+      </p>
+
+      <div class="hero-thesis">
+        <div class="thesis-label">The reframe</div>
+        <p>You cannot bypass the expensive truth. Build the cheapest trustworthy measurement of it—and let the recipe search fall out.</p>
+      </div>
+
+      <div class="hero-meta">
+        <span>Dylan Zhang</span>
+        <span>UIUC · Language-model post-training</span>
+      </div>
+    </div>
+
+    <aside class="hero-instrument" aria-label="Summary of the central result">
+      <div class="instrument-top">
+        <span>PROXY TRANSFER</span>
+        <span class="instrument-live"><i></i> audited</span>
+      </div>
+      <div class="instrument-readout">
+        <div class="readout-number">52<span>%</span></div>
+        <div class="readout-copy">small-scale signs that survived at large scale</div>
+      </div>
+      <div class="coin-line">
+        <span>coin flip</span>
+        <div class="coin-track"><i style="left:50%"></i><b style="left:52%"></b></div>
+        <span>our proxy</span>
+      </div>
+      <div class="instrument-equation">
+        <span>loop value</span>
+        <strong>=</strong>
+        <span>search</span>
+        <strong>×</strong>
+        <span class="zero">information</span>
+      </div>
+      <p>When information per evaluation is approximately zero, a smarter searcher still multiplies by zero.</p>
+    </aside>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="band band-summary" aria-labelledby="summary-title">
+  <div class="container narrow">
+    <div class="summary-card reveal">
+      <div class="summary-label" id="summary-title">In one minute</div>
+      <ul>
+        <li><strong>Proposals became cheap.</strong> A frontier model can generate plausible hypotheses faster than we can test them.</li>
+        <li><strong>Our cheap test was not trustworthy.</strong> Small-run winners survived the move to realistic training at chance rate.</li>
+        <li><strong>Better search therefore could not help.</strong> Random, genetic, hill-climbing, and LLM-guided loops all optimized essentially the same noise.</li>
+        <li><strong>Autoresearch needs an evaluator that is cheap, repeatable, and faithful.</strong> The first two make a loop runnable; the third makes its conclusions mean anything.</li>
+        <li><strong>When that evaluator does not exist, search for the measurement first.</strong> Automate proposal and execution, but do not automate belief.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="case" class="band">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">The case study</div>
+      <h2>We built the obvious loop—and ran it hard.</h2>
+      <p class="lede">
+        <a href="https://www.nature.com/articles/s41586-023-06924-6" target="_blank" rel="noopener">FunSearch</a>, <a href="https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf" target="_blank" rel="noopener">AlphaEvolve</a>, and <a href="https://openreview.net/pdf?id=lKEdGCoDNC" target="_blank" rel="noopener">ShinkaEvolve</a> showed that propose–evaluate–refine loops can discover real artifacts. Their domains share a gift: a candidate can be graded automatically. We asked whether the same loop could search the training recipe itself.
+      </p>
+      <p class="lede case-setup">
+        The agent proposed supervised fine-tuning losses. A cluster trained each candidate beside a plain cross-entropy twin with shared data and seeds. A frozen probe scored the paired difference. Promising candidates had to redraw under fresh seeds; claimed discoveries had to survive an upstream-inaccessible holdout.
+      </p>
+    </div>
+
+    <div class="stat-grid reveal" role="list" aria-label="Campaign scale">
+      <article role="listitem"><strong>25</strong><span>campaigns</span></article>
+      <article role="listitem"><strong>283</strong><span>independent lanes</span></article>
+      <article role="listitem"><strong>8,298</strong><span>trained candidates</span></article>
+      <article role="listitem"><strong>5×</strong><span>harness rebuilds</span></article>
+    </div>
+
+    <div class="container-copy reveal">
+      <p>
+        By the standards of automated recipe search, this was not a toy. We searched students from 1.7B to 8B parameters, two model families, synthetic reasoning, competition math, code generation, and realistic instruction-tuning mixtures. The engineering worked well enough to discover a more basic failure: <strong>the affordable experiment was answering a different question from the one we cared about.</strong>
+      </p>
+    </div>
+
+    <div class="lifecycle reveal" aria-label="Lifecycle of an apparent discovery">
+      <div class="lifecycle-head">
+        <span>A discovery’s lifecycle</span>
+        <small>entropy-weighted cross-entropy vs. plain cross-entropy</small>
+      </div>
+      <div class="lifecycle-track">
+        <article class="life-win">
+          <div class="life-step">0.4 epoch</div>
+          <strong>+5.2 pp</strong>
+          <p>Replicated. Mechanistically sensible. Three models proposed it independently.</p>
+        </article>
+        <div class="life-arrow" aria-hidden="true">→</div>
+        <article class="life-tie">
+          <div class="life-step">1.0 epoch</div>
+          <strong>0.0 pp</strong>
+          <p>The baseline catches up. The apparent advantage disappears.</p>
+        </article>
+        <div class="life-arrow" aria-hidden="true">→</div>
+        <article class="life-loss">
+          <div class="life-step">2.4 epochs</div>
+          <strong>−2.6 pp</strong>
+          <p>On transfer, the plain loss is now ahead.</p>
+        </article>
+      </div>
+      <p class="lifecycle-note">The effect was real. It was a sample-efficiency accelerant—not a better production recipe.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band band-dark" id="collapse">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">The collapse</div>
+      <h2>Small-scale winners carried no usable information about large-scale winners.</h2>
+      <p class="lede">
+        The comfortable explanation would be ordinary holdout overfitting. But in the one campaign that exercised its hidden holdout, 94–98% of the probe effect remained across 36 blind draws. What failed was transfer across training length, model size, family, and realistic data mixtures.
+      </p>
+    </div>
+
+    <div class="result-pair reveal">
+      <article>
+        <div class="result-label">Sign survival</div>
+        <strong>33 / 63</strong>
+        <div class="result-big">52%</div>
+        <p>against a coin’s 50%; the confidence interval comfortably includes chance</p>
+      </article>
+      <article>
+        <div class="result-label">Rank transfer</div>
+        <strong>small → blind final</strong>
+        <div class="result-big negative">−0.345</div>
+        <p>the ordering was mildly anti-predictive end to end</p>
+      </article>
+    </div>
+
+    <div class="scale-ladder reveal" aria-label="Rank correlations across the scale ladder">
+      <div class="scale-title">Where the ranking broke</div>
+      <div class="scale-row">
+        <div class="scale-name"><b>Small → primary</b><span>more data</span></div>
+        <div class="scale-meter"><i style="--value:44.15%"></i></div>
+        <strong>+0.883</strong>
+      </div>
+      <div class="scale-row scale-bad">
+        <div class="scale-name"><b>Primary → large</b><span>more training</span></div>
+        <div class="scale-meter"><i style="--value:12.4%"></i></div>
+        <strong>−0.248</strong>
+      </div>
+      <div class="scale-row">
+        <div class="scale-name"><b>Large → extra-large</b><span>more data</span></div>
+        <div class="scale-meter"><i style="--value:45.4%"></i></div>
+        <strong>+0.908</strong>
+      </div>
+      <div class="scale-row">
+        <div class="scale-name"><b>Extra-large → extended</b><span>more training</span></div>
+        <div class="scale-meter"><i style="--value:26.45%"></i></div>
+        <strong>+0.529</strong>
+      </div>
+      <div class="scale-axis"><span>−1 · inverted</span><span>0</span><span>+1 · preserved</span></div>
+    </div>
+
+    <div class="dark-callout reveal">
+      <span>The important distinction</span>
+      <p>The wins were not properties of objectives. They were properties of <em>(objective, scale, model family, data mixture, evaluator)</em> tuples—and the search had sampled exactly one tuple.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="search">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Why smarter search tied</div>
+      <h2>We kept upgrading the guesser. The ruler stayed broken.</h2>
+      <p class="lede">
+        We compared random search, hill-climbing, genetic search, and an LLM judge. Then we built deliberately crippled loops: one ignored its own results, one promoted candidates randomly, and one did not search at all.
+      </p>
+    </div>
+
+    <div class="search-race reveal" aria-label="Four search strategies converging under an uninformative evaluator">
+      <div class="race-labels">
+        <span>Random</span><span>Hill climb</span><span>Genetic</span><span>LLM judge</span>
+      </div>
+      <svg viewBox="0 0 920 260" role="img" aria-labelledby="race-title race-desc">
+        <title id="race-title">Different search strategies finish together</title>
+        <desc id="race-desc">Four paths begin separately but converge inside the evaluator noise band, within 0.08 percentage points of one another.</desc>
+        <defs>
+          <linearGradient id="noise-fill" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#7c3aed" stop-opacity=".04"/>
+            <stop offset="1" stop-color="#7c3aed" stop-opacity=".20"/>
+          </linearGradient>
+        </defs>
+        <rect x="670" y="48" width="210" height="164" rx="18" fill="url(#noise-fill)" stroke="#c9bbeb" stroke-dasharray="7 7"/>
+        <text x="775" y="72" text-anchor="middle" class="svg-label">EVALUATOR NOISE</text>
+        <path d="M40 55 C220 55, 320 118, 470 128 S650 125, 840 126" class="race-path path-a"/>
+        <path d="M40 105 C220 105, 340 80, 485 116 S680 127, 840 128" class="race-path path-b"/>
+        <path d="M40 155 C210 155, 330 185, 490 139 S690 131, 840 130" class="race-path path-c"/>
+        <path d="M40 205 C230 205, 350 145, 490 134 S680 132, 840 132" class="race-path path-d"/>
+        <line x1="840" y1="105" x2="840" y2="153" class="finish-bracket"/>
+        <text x="855" y="133" class="svg-result">0.08 pp</text>
+      </svg>
+      <p>All the degraded loops finished within <strong>0.08 pp</strong> of the full loop—about one twelfth of the per-arm noise floor.</p>
+    </div>
+
+    <div class="noise-equation reveal">
+      <div>
+        <span>Typical candidate effect</span>
+        <strong>1–3 pp</strong>
+      </div>
+      <b class="versus">vs.</b>
+      <div>
+        <span>Honest per-arm standard error</span>
+        <strong>1.83 pp</strong>
+      </div>
+      <p>When uncertainty is the same size as the effect—and the score does not transfer anyway—selection becomes sampling with extra steps.</p>
+    </div>
+
+    <div class="belief-shifts reveal">
+      <div class="belief-intro">
+        <div class="kicker">What actually taught us something</div>
+        <h3>Every real advance was a measurement advance.</h3>
+        <p>List the moments the program changed its mind and the pattern is embarrassingly consistent.</p>
+      </div>
+      <div class="belief-list">
+        <article><span>01</span><div><strong>Matched control</strong><p>Exposed selection on the dependent variable.</p></div></article>
+        <article><span>02</span><div><strong>Probe floor check</strong><p>Killed a dramatic but impossible-to-read dissociation.</p></div></article>
+        <article><span>03</span><div><strong>Independent reseeds</strong><p>Separated a real effect from a favorable draw.</p></div></article>
+        <article><span>04</span><div><strong>Unconditioned population</strong><p>Removed correlation manufactured by escalation.</p></div></article>
+        <article><span>05</span><div><strong>Calibrated null</strong><p>Showed that “winner-picking” metrics added no lift.</p></div></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="boundary" class="band band-tint">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">The boundary of autoresearch</div>
+      <h2>A problem is ready when its evaluator is cheap, repeatable, and faithful.</h2>
+      <p class="lede">
+        Cheap and deterministic is the right intuition. I would add one word: <strong>valid</strong>. A deterministic proxy may repeat perfectly while measuring the wrong target. That is not a small defect; it is an efficient way to optimize yourself into error.
+      </p>
+    </div>
+
+    <div class="three-gates reveal" role="list" aria-label="Three core requirements for an autoresearch evaluator">
+      <article role="listitem">
+        <div class="gate-orbit"><span>$</span></div>
+        <div><h3>Cheap</h3><p>Enough budget remains for many candidates, independent reruns, controls, and an untouched confirmation.</p></div>
+      </article>
+      <article role="listitem">
+        <div class="gate-orbit"><span>↻</span></div>
+        <div><h3>Repeatable</h3><p>The same candidates keep the same ordering. Literal determinism is optional if noise is cheap to average below the effect size.</p></div>
+      </article>
+      <article role="listitem">
+        <div class="gate-orbit"><span>◎</span></div>
+        <div><h3>Faithful</h3><p>On unselected candidates, proxy winners also win on the real target, at the scale and setting of the claim.</p></div>
+      </article>
+      <div class="gate-product" aria-label="All three properties are required">
+        <span>cheap</span><b>×</b><span>repeatable</span><b>×</b><span>faithful</span><strong>= usable feedback</strong>
+      </div>
+    </div>
+
+    <aside class="precision-note reveal">
+      <strong>“Deterministic” is practical, not literal.</strong>
+      <p>Training, runtime, and wet-lab assays can be stochastic and still support autoresearch. The real question is whether pairing and replication can make uncertainty small enough—cheaply enough—to rank the improvements you care about.</p>
+    </aside>
+
+    <div class="matrix-wrap reveal">
+      <div class="matrix-title">
+        <div class="kicker">The two-by-two</div>
+        <h3>Cheap feedback helps only when it points at the target.</h3>
+      </div>
+      <div class="matrix" aria-label="Autoresearch readiness matrix">
+        <div class="matrix-corner"></div>
+        <div class="matrix-col">Faithful to the target</div>
+        <div class="matrix-col">Unvalidated or misaligned</div>
+        <div class="matrix-row">Cheap, fast, repeatable</div>
+        <article class="cell cell-green">
+          <span>Run the loop</span>
+          <h4>Closed-loop autoresearch</h4>
+          <p>Search aggressively, then confirm on a frozen oracle.</p>
+        </article>
+        <article class="cell cell-red">
+          <span>Proxy trap</span>
+          <h4>Fast, convincing failure</h4>
+          <p>Optimization discovers the evaluator’s weaknesses before it discovers truth.</p>
+        </article>
+        <div class="matrix-row">Expensive, slow, or noisy</div>
+        <article class="cell cell-yellow">
+          <span>Gate the loop</span>
+          <h4>Active-learning science</h4>
+          <p>Automate proposals and triage. Spend rare oracle calls where they add the most information.</p>
+        </article>
+        <article class="cell cell-gray">
+          <span>Not ready</span>
+          <h4>Measurement research first</h4>
+          <p>Do not authorize autonomous conclusions around today’s convenient score.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="stress-test">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">A seven-gate stress test</div>
+      <h2>Before optimizing a proxy, make it earn the right to select.</h2>
+      <p class="lede">Autoresearch readiness is a property of a <em>(claim, evaluator, deployment regime)</em> tuple—not a property of a field.</p>
+    </div>
+
+    <ol class="gate-list reveal">
+      <li><span>01</span><div><h3>Throughput</h3><p>Can the budget buy enough independent candidates, baselines, reruns, and one untouched final test?</p></div></li>
+      <li><span>02</span><div><h3>Repeatability</h3><p>Does a rerun preserve the ordering, with uncertainty smaller than the minimum meaningful effect?</p></div></li>
+      <li><span>03</span><div><h3>Criterion fidelity</h3><p>On an unselected sample, does the proxy preserve sign, rank, and top-k uplift on the actual target?</p></div></li>
+      <li><span>04</span><div><h3>Optimization robustness</h3><p>After the loop learns the proxy’s weaknesses, do selected winners still win on a frozen independent oracle?</p></div></li>
+      <li><span>05</span><div><h3>Feedback latency</h3><p>Does truth arrive before the harness, target, or world changes underneath the loop?</p></div></li>
+      <li><span>06</span><div><h3>Resetability</h3><p>Can every trial restart from a common state without contaminating future trials or causing irreversible harm?</p></div></li>
+      <li><span>07</span><div><h3>Programmability</h3><p>Can hypotheses become safe executable changes—and does the action language include the ideas worth finding?</p></div></li>
+    </ol>
+
+    <div class="certify-flow reveal" aria-label="How to certify an evaluator before search">
+      <div class="certify-label">Evaluator certification</div>
+      <div class="flow-row">
+        <article><span>1</span><p>Measure the noise floor</p></article>
+        <b>→</b>
+        <article><span>2</span><p>Sample candidates without selection</p></article>
+        <b>→</b>
+        <article><span>3</span><p>Score proxy and real target</p></article>
+        <b>→</b>
+        <article><span>4</span><p>Freeze, optimize, audit top-k</p></article>
+      </div>
+      <p>The fourth step is the decisive one. Ordinary correlation is not enough; the evaluator must remain valid <em>after</em> optimization pressure.</p>
+    </div>
+  </div>
+</section>
+
+<section id="landscape" class="band band-dark band-landscape">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">What can we autoresearch?</div>
+      <h2>The boundary is not software versus science. It is oracle-rich versus oracle-poor.</h2>
+      <p class="lede">
+        Few domains are permanently off limits. But many claims are larger than the evaluator that supposedly certifies them. Choose a tier below to see where today’s loop can close—and where it must stay open.
+      </p>
+    </div>
+
+    <div class="tier-browser reveal" data-tier-browser>
+      <div class="tier-tabs" role="tablist" aria-label="Autoresearch readiness tiers">
+        <button class="tier-tab is-active" type="button" role="tab" id="tab-green" aria-controls="panel-green" aria-selected="true" data-tier="green">
+          <span class="tier-dot green"></span><b>Ready now</b><small>direct or certified oracle</small>
+        </button>
+        <button class="tier-tab" type="button" role="tab" id="tab-yellow" aria-controls="panel-yellow" aria-selected="false" data-tier="yellow" tabindex="-1">
+          <span class="tier-dot yellow"></span><b>Conditional</b><small>proxy + periodic truth</small>
+        </button>
+        <button class="tier-tab" type="button" role="tab" id="tab-red" aria-controls="panel-red" aria-selected="false" data-tier="red" tabindex="-1">
+          <span class="tier-dot red"></span><b>Not yet</b><small>oracle-poor or irreversible</small>
+        </button>
+      </div>
+
+      <div class="tier-panels">
+        <section class="tier-panel is-active" id="panel-green" role="tabpanel" aria-labelledby="tab-green" data-tier-panel="green">
+          <div class="tier-summary"><strong>Close the loop.</strong><p>Correctness or value can be checked directly, cheaply, and repeatedly.</p></div>
+          <div class="example-grid">
+            <article><span>Formal methods</span><h3>Machine-checked proof search</h3><p>A proof checker certifies validity exactly. It does not certify that the theorem is important.</p></article>
+            <article><span>Algorithms</span><h3>Combinatorial constructions</h3><p>Feasibility is exact and the objective—size, cost, packing, distance—is computable.</p></article>
+            <article><span>Systems</span><h3>Programs, kernels, and compilers</h3><p>Use formal equivalence or hidden tests for correctness, then benchmark a fixed workload.</p></article>
+            <article><span>Closed worlds</span><h3>Games and synthetic environments</h3><p>Trials are fast, resettable, and scored by the environment rather than a model’s opinion.</p></article>
+          </div>
+        </section>
+
+        <section class="tier-panel" id="panel-yellow" role="tabpanel" aria-labelledby="tab-yellow" data-tier-panel="yellow">
+          <div class="tier-summary"><strong>Gate the loop.</strong><p>Use cheap proxies for triage, then periodically buy direct labels and update the evaluator.</p></div>
+          <div class="example-grid">
+            <article><span>Robotics</span><h3>Simulation-to-real design</h3><p>A simulator accelerates search only as far as its ranking survives on physical hardware.</p></article>
+            <article><span>Biology &amp; materials</span><h3>Models plus robotic assays</h3><p>Autonomy becomes plausible when assays are direct, repeated, standardized, and affordable—not from docking score alone.</p></article>
+            <article><span>ML systems</span><h3>Training and architecture search</h3><p>Reduced-scale runs can triage candidates only after scale-transfer validity is demonstrated.</p></article>
+            <article><span>Agent design</span><h3>Workflow and prompt search</h3><p>Frozen benchmarks and model judges are useful screens, but need hidden tasks and human or deployment audits.</p></article>
+          </div>
+        </section>
+
+        <section class="tier-panel" id="panel-red" role="tabpanel" aria-labelledby="tab-red" data-tier-panel="red">
+          <div class="tier-summary"><strong>Keep the belief loop open.</strong><p>Agents can propose, implement, and analyze. The current proxy should not decide what is true.</p></div>
+          <div class="example-grid">
+            <article><span>Health</span><h3>Clinical efficacy and safety</h3><p>Faithful outcomes are slow, ethically constrained, heterogeneous, and not cheaply resettable.</p></article>
+            <article><span>Society</span><h3>Education, policy, and markets</h3><p>Interventions change the system, spill over to others, and reveal outcomes on long horizons.</p></article>
+            <article><span>Reliability</span><h3>Rare, catastrophic failures</h3><p>Not seeing a failure in a cheap test is weak evidence about the deployment tail.</p></article>
+            <article><span>Values</span><h3>Importance, taste, and social value</h3><p>A judge can score its preference consistently without resolving what people should value.</p></article>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="claim-pairs reveal">
+      <div class="claim-title">
+        <div class="kicker">Scope the claim to the checker</div>
+        <h3>The same project can be green on the left and red on the right.</h3>
+      </div>
+      <div class="claim-table" role="table" aria-label="Claims an evaluator can and cannot certify">
+        <div class="claim-header" role="columnheader">The evaluator can certify</div>
+        <div class="claim-header" role="columnheader">It cannot, by itself, certify</div>
+        <div role="cell"><strong>“Find a machine-checkable proof.”</strong></div>
+        <div role="cell">“Find a theorem that matters.”</div>
+        <div role="cell"><strong>“Find the fastest A100 kernel for these shapes.”</strong></div>
+        <div role="cell">“Find a generally faster implementation.”</div>
+        <div role="cell"><strong>“Maximize docking score in this simulator.”</strong></div>
+        <div role="cell">“Find a safe, effective drug.”</div>
+        <div role="cell"><strong>“Maximize this frozen agent benchmark.”</strong></div>
+        <div role="cell">“Improve real-world agent reliability.”</div>
+      </div>
+    </div>
+
+    <blockquote class="landscape-quote reveal">
+      <p>Autoresearch is not binary. We can automate proposing and running experiments long before we can automate <em>believing</em> their results.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="invert" class="band">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Invert the search</div>
+      <h2>When the proxy is red, search for the measurement—not the recipe.</h2>
+      <p class="lede">
+        The expensive target in our case was: <em>will this objective help at production scale, on realistic data, on the model we will ship?</em> We could not afford that answer per candidate. Instead of pretending the small run was truth, the agent should have proposed better ways to predict the expensive outcome.
+      </p>
+    </div>
+
+    <div class="loop-compare reveal">
+      <article class="old-loop">
+        <div class="loop-label">What we ran</div>
+        <h3>Recipe-search loop</h3>
+        <div class="mini-loop">
+          <span>propose loss</span><b>→</b><span>train small</span><b>→</b><span>read delta</span>
+        </div>
+        <dl>
+          <div><dt>Reward</dt><dd>small-scale delta</dd></div>
+          <div><dt>Transfer</dt><dd>52% sign survival</dd></div>
+          <div><dt>Failure</dt><dd>crown the luckiest local tuple</dd></div>
+        </dl>
+      </article>
+      <div class="loop-switch" aria-hidden="true">→</div>
+      <article class="new-loop">
+        <div class="loop-label">What we should run</div>
+        <h3>Measurement-search loop</h3>
+        <div class="mini-loop">
+          <span>propose evaluator</span><b>→</b><span>replay history</span><b>→</b><span>test transfer</span>
+        </div>
+        <dl>
+          <div><dt>Reward</dt><dd>out-of-sample validity</dd></div>
+          <div><dt>Inner loop</dt><dd>nearly free replay</dd></div>
+          <div><dt>GPU budget</dt><dd>buy labels where evaluators disagree</dd></div>
+        </dl>
+      </article>
+    </div>
+
+    <div class="active-learning reveal">
+      <div class="active-copy">
+        <div class="kicker">Where expensive experiments go</div>
+        <h3>One good label can re-price hundreds of old experiments.</h3>
+        <p>
+          Every historical comparison referenced a baseline anchor. Roughly <strong>16 fresh baseline retrains</strong> could update the interpretation of <strong>731 small-versus-large pairs</strong> at once. That was a higher-value use of the cluster than another wide batch of one-draw ideas.
+        </p>
+      </div>
+      <div class="leverage-visual" aria-label="Sixteen anchor retrains update 731 historical comparisons">
+        <div class="anchor-stack">
+          <span></span><span></span><span></span><span></span>
+          <strong>16</strong><small>anchor<br/>retrains</small>
+        </div>
+        <div class="leverage-arrow"><span>re-price</span>→</div>
+        <div class="history-cloud">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <strong>731</strong><small>historical pairs</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rules" class="band band-tint">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="kicker">Five rules bought with scars</div>
+      <h2>What I would require before running another loop.</h2>
+    </div>
+
+    <ol class="rules reveal">
+      <li><span>1</span><div><h3>Certify the label before searching on it.</h3><p>Ground-truth reliability bounds every metric trained or selected against it. Measure anchor variance first.</p></div></li>
+      <li><span>2</span><div><h3>Schedule the blind, realistic draw automatically.</h3><p>A flagged discovery should confirm or die on a rung and instrument it never selected on.</p></div></li>
+      <li><span>3</span><div><h3>Give every probe a calibration certificate.</h3><p>Attach its floor, noise level, contamination checks, and demonstrated transfer range.</p></div></li>
+      <li><span>4</span><div><h3>Price machinery against its absence.</h3><p>Every clever search component should ship with a value-blind or random ablation.</p></div></li>
+      <li><span>5</span><div><h3>Buy depth before breadth.</h3><p>Fewer candidates with independent reruns usually buy more information than thousands of one-draw arms.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" id="limits">
+  <div class="container narrow">
+    <div class="section-head reveal">
+      <div class="kicker">Scope and honesty</div>
+      <h2>What this case does—and does not—establish.</h2>
+    </div>
+
+    <div class="limits-list reveal">
+      <article><span>Established here</span><p>When each evaluation carries near-zero information about the desired outcome, search policies tie. Our full and crippled loops did.</p></article>
+      <article><span>Not established</span><p>That search policy never matters once the evaluator is valid. A trustworthy instrument is necessary; how much proposer quality matters afterward is still an empirical question.</p></article>
+      <article><span>Important limitation</span><p>Our action language expressed only 9.6% of a broader catalog of known objectives. A flat result in this space is not a verdict on all post-training ideas.</p></article>
+      <article><span>Hardest caveat</span><p>The reliability ceiling of our historical large-scale labels may itself be low. That weakens any exact estimate of proxy fidelity, while strengthening the measurement diagnosis.</p></article>
+    </div>
+
+    <p class="scope-closing reveal">
+      This is one internal program, not a universal benchmark release. The claim I am willing to make is narrower: <strong>a loop cannot manufacture information that its evaluator does not contain.</strong>
+    </p>
+  </div>
+</section>
+
+<section class="band band-closing">
+  <div class="container narrow reveal">
+    <div class="closing-mark" aria-hidden="true">◎</div>
+    <h2>Every research loop has a thing that guesses and a thing that knows.</h2>
+    <p>
+      The last few years made the guesser astonishing—and nearly free. In our loop, the knower was still handmade, noisy, and blind exactly where it mattered: the jump from cheap experiments to the world we wanted to make claims about.
+    </p>
+    <p class="closing-thesis">
+      The frontier of autoresearch is the frontier of cheap, trustworthy measurement.
+    </p>
+    <p>
+      When you have that measurement, search aggressively. When you do not, automate the work of obtaining truth—not truth itself.
+    </p>
+    <div class="closing-links">
+      <a class="button" href="mailto:shizhuo2@illinois.edu">Discuss this piece ↗</a>
+      <a class="button button-ghost" href="/">← Back to Dylan Zhang</a>
+    </div>
+  </div>
+</section>
+
+<section class="band references" id="references">
+  <div class="container narrow">
+    <div class="kicker">Selected references</div>
+    <ol>
+      <li>Romera-Paredes, B. et al. <a href="https://www.nature.com/articles/s41586-023-06924-6" target="_blank" rel="noopener">“Mathematical discoveries from program search with large language models.”</a> <em>Nature</em> (2024).</li>
+      <li>Novikov, A. et al. <a href="https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf" target="_blank" rel="noopener">“AlphaEvolve: A coding agent for scientific and algorithmic discovery.”</a> Google DeepMind (2025).</li>
+      <li>Lange, R. et al. <a href="https://openreview.net/pdf?id=lKEdGCoDNC" target="_blank" rel="noopener">“ShinkaEvolve: Towards open-ended and sample-efficient program evolution.”</a> ICLR (2026).</li>
+      <li>Smith, J. E. &amp; Winkler, R. L. <a href="https://doi.org/10.1287/mnsc.1050.0451" target="_blank" rel="noopener">“The optimizer’s curse.”</a> <em>Management Science</em> (2006).</li>
+      <li>Manheim, D. &amp; Garrabrant, S. <a href="https://arxiv.org/abs/1803.04585" target="_blank" rel="noopener">“Categorizing variants of Goodhart’s law.”</a> (2018).</li>
+      <li>Cronbach, L. J. &amp; Meehl, P. E. <a href="https://doi.org/10.1037/h0040957" target="_blank" rel="noopener">“Construct validity in psychological tests.”</a> <em>Psychological Bulletin</em> (1955).</li>
+      <li>Weng, L. <a href="https://lilianweng.github.io/posts/2026-07-04-harness/" target="_blank" rel="noopener">“Harness Engineering for Self-Improvement.”</a> Lil’Log (2026).</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div><strong>Measurement Is the Bottleneck of Auto-Research</strong><span>Dylan Zhang · August 2026</span></div>
+  <a href="#top">Back to top ↑</a>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>

@@ -201,19 +201,19 @@ h1, h2, h3, h4 { font-family: var(--serif); font-weight: 700; letter-spacing: -.
 .cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 760px) { .cards2 { grid-template-columns: 1fr; } }
 .card {
-  position: relative; overflow: hidden; display: block;
+  position: relative; overflow: hidden; display: flex;
   background: #fff; border: 1px solid var(--rule); border-radius: 20px; padding: 26px;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .card:hover { transform: translateY(-4px); box-shadow: 0 26px 48px -30px rgba(96,36,192,.55); border-color: var(--accent-soft); }
 .card .glow { position: absolute; top: -40px; right: -40px; width: 140px; height: 140px; border-radius: 50%; background: rgba(164,114,240,.22); filter: blur(20px); transition: background .18s ease; }
 .card:hover .glow { background: rgba(164,114,240,.4); }
-.card-rel { position: relative; }
+.card-rel { position: relative; display: flex; width: 100%; flex-direction: column; }
 .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .card-ico { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: linear-gradient(135deg, rgba(124,58,237,.12), rgba(37,99,201,.1)); color: var(--accent-deep); border: 1px solid var(--rule); }
 .card h3 { font-family: var(--sans); font-size: 17px; font-weight: 700; line-height: 1.3; color: var(--ink); }
 .card p { font-size: 14px; color: var(--ink-quiet); margin: 0; line-height: 1.55; }
-.card-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 16px; font-size: 14px; font-weight: 600; color: var(--accent-deep); }
+.card-link { display: inline-flex; align-items: center; align-self: flex-start; gap: 7px; margin-top: auto; padding-top: 16px; font-size: 14px; font-weight: 600; color: var(--accent-deep); }
 .card:hover .card-link .arr { transform: translateX(4px); }
 .card-link .arr { transition: transform .18s ease; }
 
