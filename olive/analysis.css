@@ -1,0 +1,72 @@
+/* Analysis plots extend the article's native-HTML result charts. */
+.analysis-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 22px; margin: 34px 0 38px; }
+.analysis-pair > .analysis-figure { min-width: 0; margin: 0; padding: 24px 21px; }
+.analysis-figure .result-eyebrow { font-size: 12px; letter-spacing: .06em; }
+.prose .analysis-pair .result-title { font-size: 1.5rem; }
+.analysis-figure .result-header { gap: 18px; }
+.analysis-pair .result-controls { width: 100%; }
+.analysis-pair .result-controls button { flex: 1; }
+.analysis-figure .plot-method, .analysis-figure .plot-value { font-size: 12px; }
+.analysis-figure .plot-row + .plot-row { margin-top: 19px; }
+.analysis-figure .plot-track { height: 22px; }
+.analysis-figure .method-oec .plot-bar { background: #9bb49e; }
+.analysis-figure .result-subtitle { font-size: 12px; }
+.analysis-figure .plot-axis { font-size: 12px; }
+.analysis-figure .plot-scale-label { font-size: 12px; }
+.analysis-figure .plot-axis-title { font-size: 12px; }
+.analysis-figure figcaption { font-size: 12px; }
+.analysis-figure .plot-annotation { margin: 0 0 22px; padding: 11px 13px; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--muted); font: 12px/1.65 var(--sans); }
+.analysis-figure .plot-annotation strong { color: var(--green-deep); }
+.forgetting-plot .plot-track { border-left: 0; border-right: 2px solid #5a6e5b; background-image: repeating-linear-gradient(to right, var(--plot-grid) 0, var(--plot-grid) 1px, transparent 1px, transparent 25%); }
+.forgetting-plot .plot-bar { margin-left: auto; border-radius: 2px 0 0 2px; }
+.analysis-figure .plot-row.is-zero .plot-track::after { content: ""; position: absolute; right: -4px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: #5a6e5b; }
+.forgetting-plot .plot-axis span:last-child { color: var(--green-deep); font-weight: 650; }
+.analysis-training-order { margin: 0 0 25px; color: var(--muted); font: 12px/1.75 var(--sans); }
+.analysis-training-order strong { color: var(--ink); }
+.plasticity-plot { --zero: 25%; }
+.plasticity-plot .plot-panel-heading { margin-bottom: 25px; }
+.plasticity-plot .plot-row { grid-template-columns: 108px minmax(0, 1fr) 62px; align-items: center; column-gap: 12px; row-gap: 0; }
+.plasticity-plot .plot-method { grid-column: 1; grid-row: 1; font-weight: 550; color: var(--ink); }
+.plasticity-plot .plot-value { grid-column: 3; grid-row: 1; text-align: right; font-size: 12px; }
+.plasticity-plot .plot-track { grid-column: 2; grid-row: 1; height: 27px; border: 0; background-color: #f4f5ef; background-image: linear-gradient(to right, rgba(87, 96, 82, .04) 0, rgba(87, 96, 82, .04) var(--zero), transparent var(--zero)), repeating-linear-gradient(to right, var(--plot-grid) 0, var(--plot-grid) 1px, transparent 1px, transparent 25%); }
+.plasticity-plot .plot-track::before { content: ""; position: absolute; left: var(--zero); top: -3px; bottom: -3px; width: 1px; background: #70866e; z-index: 2; }
+.plasticity-plot .plot-bar { position: absolute; top: 0; left: var(--bar-start); width: var(--bar-size); background: var(--green); }
+.plasticity-plot .is-negative .plot-bar { border-radius: 2px 0 0 2px; background: #9baba0; }
+.plasticity-plot .is-negative .plot-value { color: #56685a; }
+.plasticity-plot .plot-row.is-zero .plot-track::after { left: calc(var(--zero) - 3px); right: auto; top: 10px; z-index: 3; }
+.plasticity-plot .plot-axis { position: relative; display: block; height: 18px; margin: 14px 74px 0 120px; }
+.plasticity-plot .plot-axis span { position: absolute; top: 0; transform: translateX(-50%); }
+.plasticity-plot .plot-axis span:first-child { left: 0; transform: none; }
+.plasticity-plot .plot-axis span:nth-child(2) { left: 25%; color: var(--green-deep); font-weight: 650; }
+.plasticity-plot .plot-axis span:nth-child(3) { left: 50%; }
+.plasticity-plot .plot-axis span:nth-child(4) { left: 75%; }
+.plasticity-plot .plot-axis span:last-child { right: 0; transform: none; }
+.plasticity-plot .plot-axis-title { margin-left: 120px; margin-right: 74px; }
+.plasticity-plot .plot-average { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.plasticity-plot .plot-average .plot-value, .plasticity-plot .plot-average .plot-method { font-weight: 750; color: var(--green-deep); }
+.plasticity-plot .plot-average .plot-track { background-color: #eaf0e7; }
+.plasticity-plot .plot-average .plot-bar { background: var(--green-deep); }
+.analysis-figure .plot-axis span { white-space: nowrap; }
+@media (max-width: 1050px) and (min-width: 801px) {
+  .analysis-pair { grid-template-columns: 1fr; }
+  .analysis-pair > .analysis-figure { padding: 24px; }
+}
+@media (max-width: 620px) {
+  .analysis-pair { grid-template-columns: 1fr; gap: 22px; }
+  .analysis-pair > .analysis-figure { padding: 23px 18px; }
+  .prose .analysis-pair .result-title { font-size: 1.55rem; }
+  .analysis-figure .result-eyebrow { font-size: 12px; }
+  .plasticity-plot .plot-row { grid-template-columns: 91px minmax(0, 1fr) 57px; column-gap: 7px; }
+  .plasticity-plot .plot-axis { margin-left: 98px; margin-right: 64px; }
+  .plasticity-plot .plot-axis-title { margin: 10px 0 0; }
+  .plasticity-plot .plot-axis span:nth-child(3), .plasticity-plot .plot-axis span:nth-child(4) { visibility: hidden; }
+}
+@media (max-width: 360px) {
+  .plasticity-plot .plot-row { grid-template-columns: 83px minmax(0, 1fr) 54px; column-gap: 6px; }
+  .plasticity-plot .plot-axis { margin-left: 89px; margin-right: 60px; }
+}
+@media print {
+  .analysis-pair { display: block; }
+  .analysis-pair > .analysis-figure { margin: 25px 0; break-inside: avoid; }
+  .plasticity-plot { break-inside: avoid; }
+}

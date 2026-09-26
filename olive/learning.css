@@ -1,0 +1,50 @@
+/* Responsive learning curves: vector paths with readable HTML axes and values. */
+.learning-figure .result-header { margin-bottom: 25px; }
+.curve-legend { display: flex; flex-wrap: wrap; gap: 12px 25px; margin: 0 0 25px; color: var(--muted); font: 550 12px/1.5 var(--sans); }
+.curve-legend span { display: inline-flex; align-items: center; gap: 9px; }
+.curve-legend span::before { content: ""; width: 25px; border-top: 3px solid currentColor; }
+.curve-legend .curve-offline::before { border-top-style: dashed; }
+.curve-olive { color: var(--green); }
+.curve-offline { color: #859083; }
+.curve-chart { margin: 0 3px 0 30px; }
+.curve-canvas { position: relative; height: 255px; margin-top: 12px; border-bottom: 1px solid var(--rule); }
+.curve-grid { position: absolute; width: 100%; border-top: 1px solid var(--plot-grid); }
+.curve-grid span { position: absolute; top: 0; left: -30px; width: 21px; transform: translateY(-50%); color: var(--muted); text-align: right; font: 12px/1 var(--sans); }
+.curve-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.curve-line { fill: none; stroke: currentColor; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.curve-line.curve-offline { stroke-dasharray: 6 5; }
+.curve-error { position: absolute; width: 1px; border-left: 1px solid currentColor; transform: translateX(-50%); opacity: .75; }
+.curve-error::before, .curve-error::after { content: ""; position: absolute; left: -4px; width: 7px; border-top: 1px solid currentColor; }
+.curve-error::before { top: 0; }
+.curve-error::after { bottom: 0; }
+.curve-dot { position: absolute; width: 8px; height: 8px; border: 2px solid currentColor; border-radius: 50%; background: var(--paper-raised); transform: translate(-50%, 50%); }
+.curve-dot.curve-olive { background: var(--green); }
+.curve-dot.is-selected { outline: 4px solid rgba(56, 97, 67, .12); }
+.curve-x-ticks { position: relative; height: 22px; margin-top: 13px; color: var(--muted); font: 12px/1 var(--sans); }
+.curve-x-ticks span { position: absolute; transform: translateX(-50%); }
+.learning-figure .plot-axis-title { margin-top: 0; }
+.curve-inspect { display: none; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 26px; color: var(--muted); font: 12px/1.5 var(--sans); }
+.curves-ready .curve-inspect { display: flex; }
+.curve-inspect-label { margin-right: 7px; }
+.curve-inspect button { min-width: 36px; min-height: 36px; padding: 7px; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--muted); font: 600 12px/1.5 var(--sans); cursor: pointer; }
+.curve-inspect button[aria-pressed="true"] { background: var(--green-deep); border-color: var(--green-deep); color: white; }
+.curve-inspect button:hover { border-color: var(--green); }
+.curve-readout { display: none; flex-wrap: wrap; gap: 10px 26px; margin-top: 14px; padding: 16px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); color: var(--muted); font: 12px/1.6 var(--sans); }
+.curves-ready .curve-readout { display: flex; }
+.curve-readout strong { margin-left: 6px; font-size: 17px; font-variant-numeric: tabular-nums; }
+.curve-readout-olive { color: var(--green-deep); }
+.curve-values { margin-top: 16px; color: var(--muted); font: 12px/1.8 var(--sans); }
+.curve-values summary { cursor: pointer; }
+.curve-values ul { margin: 12px 0 0; padding-left: 18px; }
+@media (max-width: 560px) {
+  .curve-canvas { height: 215px; }
+  .learning-figure .result-controls button { padding-inline: 8px; white-space: normal; }
+  .curve-inspect-label { flex-basis: 100%; margin-bottom: 3px; }
+  .curve-readout { gap: 10px 17px; }
+}
+@media print {
+  .curve-inspect { display: none !important; }
+  .curve-canvas { height: 210px; }
+  .learning-panel { break-inside: avoid; }
+  .curve-values ul { display: block; }
+}

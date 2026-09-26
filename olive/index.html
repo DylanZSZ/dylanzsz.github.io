@@ -21,8 +21,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="results.css">
+  <link rel="stylesheet" href="analysis.css">
+  <link rel="stylesheet" href="learning.css">
   <script src="script.js" defer></script>
   <script src="results.js" defer></script>
+  <script src="learning.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to article</a>
@@ -55,7 +58,7 @@
   <div class="shell article-grid">
     <aside class="toc" aria-label="On this page">
       <p>In this note</p>
-      <nav><a href="#why">Why intervene?</a><a href="#method">The OLIVE loop</a><a href="#reasoning">Reasoning</a><a href="#agents">Agents</a><a href="#cost">Training cost</a><a href="#online">Keep it online</a><a href="#next">Larger scale, soon</a></nav>
+      <nav><a href="#why">Why intervene?</a><a href="#method">The OLIVE loop</a><a href="#reasoning">Reasoning</a><a href="#agents">Agents</a><a href="#cost">Training cost</a><a href="#online">Analysis</a><a href="#next">Larger scale, soon</a></nav>
     </aside>
     <article class="prose">
       <section id="why">
@@ -400,12 +403,176 @@
       </section>
 
       <section id="online">
-        <h2>Fresh contexts keep the supervision useful.</h2>
-        <p>Collecting student prefixes once helps cover the initial student’s behavior. Refreshing them lets the teacher respond to the student that exists now. In a separate RLVE analysis using complete, verifier-filtered continuations, the online variant improved over both offline full-teacher data and continuations collected from a fixed student.</p>
-        <p>That analysis also measured general capabilities after training. Average accuracy on the general benchmarks fell by 0.9 points for the online variant, compared with 3.4 points for full offline SFT. Online intervention preserved more of the student’s general capabilities.
-        </p><p class="note">This experiment uses complete, filtered continuations. The main reasoning comparison uses short, unfiltered continuations.</p>
-        <p>We also tried a teacher available through generated text alone: GPT-5.4-mini on ScienceWorld. Offline SFT led during the first two epochs, then plateaued. OLIVE kept improving and finished ahead after five epochs. For this experiment, the appealing part is that ordinary teacher text was enough to keep supplying supervision as the student changed.</p>
-        <p>In a separate sequential-training experiment with Qwen3-4B, the online method also finished ahead on average across the agent environments. It tied on BabyAI and was slightly worse on SearchQA. The largest gain was on ScienceWorld, the last environment in the training sequence. The positive average result supports keeping supervision connected to the current student as it learns new tasks.</p>
+        <p class="eyebrow">Analysis</p>
+        <h2>Learn more while preserving what the student knows.</h2>
+        <p>Refreshing the student’s own prefixes improves transfer and preserves more of its general capabilities. We compared complete teacher solutions, teacher continuations from a fixed initial student, and continuations collected from the changing student throughout training.</p>
+        <p>For this analysis, all three training conditions use complete responses filtered by a verifier. The fixed-prefix baseline collects the student’s attempts once. OLIVE refreshes those attempts as the student learns, so each new intervention responds to its current behavior.</p>
+        <div class="analysis-pair">
+<figure class="result-figure analysis-figure distribution-plot" data-result-plot="distribution" aria-labelledby="distribution-plot-title">
+  <div class="result-header">
+    <div><p class="result-eyebrow">01 · Learning on RLVE</p><h3 class="result-title" id="distribution-plot-title">Fresh contexts improve learning.</h3><p class="result-subtitle">Online prefixes versus fixed data.</p></div>
+    <div class="result-controls" role="group" aria-label="Distribution analysis metric"><button type="button" data-result-select="avg" aria-pressed="true" aria-controls="distribution-avg">Avg@k</button><button type="button" data-result-select="pass" aria-pressed="false" aria-controls="distribution-pass">Pass@k</button></div>
+  </div>
+<div class="result-plot-panel" data-result-panel="avg" id="distribution-avg" role="group" aria-label="RLVE Avg@k distribution analysis" data-announcement="Showing Avg@k on RLVE. The scale is zero to 15 percent."><div class="plot-panel-heading"><h4>Avg@k</h4><span class="plot-scale-label">0–15% · higher is better</span></div><ol class="plot-bars" role="list" aria-label="RLVE Avg@k results in percent">
+<li class="plot-row method-student" data-value="3.3"><span class="plot-method">Original student</span><span class="plot-value">3.3%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 22%"></span></span></li>
+<li class="plot-row method-offline" data-value="8.1"><span class="plot-method">Offline full SFT</span><span class="plot-value">8.1%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 54%"></span></span></li>
+<li class="plot-row method-oec" data-value="10.7"><span class="plot-method">Fixed student prefix (OEC)</span><span class="plot-value">10.7%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 71.33333333%"></span></span></li>
+<li class="plot-row method-olive" data-value="12.2"><span class="plot-method">OLIVE</span><span class="plot-value">12.2%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 81.33333333%"></span></span></li>
+</ol><div class="plot-axis" aria-hidden="true"><span>0%</span><span>3.75%</span><span>7.5%</span><span>11.25%</span><span>15%</span></div><p class="plot-axis-title">Avg@k (%)</p></div>
+<div class="result-plot-panel" data-result-panel="pass" id="distribution-pass" role="group" aria-label="RLVE Pass@k distribution analysis" data-announcement="Showing Pass@k on RLVE. The scale is zero to 40 percent."><div class="plot-panel-heading"><h4>Pass@k</h4><span class="plot-scale-label">0–40% · higher is better</span></div><ol class="plot-bars" role="list" aria-label="RLVE Pass@k results in percent">
+<li class="plot-row method-student" data-value="11.1"><span class="plot-method">Original student</span><span class="plot-value">11.1%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 27.75%"></span></span></li>
+<li class="plot-row method-offline" data-value="23.9"><span class="plot-method">Offline full SFT</span><span class="plot-value">23.9%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 59.75%"></span></span></li>
+<li class="plot-row method-oec" data-value="30.0"><span class="plot-method">Fixed student prefix (OEC)</span><span class="plot-value">30.0%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 75%"></span></span></li>
+<li class="plot-row method-olive" data-value="33.3"><span class="plot-method">OLIVE</span><span class="plot-value">33.3%</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 83.25%"></span></span></li>
+</ol><div class="plot-axis" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span></div><p class="plot-axis-title">Pass@k (%)</p></div>
+<p class="plot-status" role="status" aria-live="polite" aria-atomic="true"></p><figcaption><p><strong>Avg@k</strong> averages correctness over k attempts. <strong>Pass@k</strong> measures whether at least one succeeds. We retain the source figure’s notation.</p><p>This analysis uses complete, verifier-filtered continuations. OEC collects prefixes from a fixed student; OLIVE refreshes prefixes as the student learns.</p></figcaption></figure>
+<figure class="result-figure analysis-figure forgetting-plot" aria-labelledby="forgetting-plot-title">
+  <div class="result-header"><div><p class="result-eyebrow">02 · General capabilities</p><h3 class="result-title" id="forgetting-plot-title">Smaller drops beyond the training tasks.</h3><p class="result-subtitle">Change from the original student.</p></div></div>
+  <p class="plot-annotation"><strong>Zero is the starting point.</strong> A shorter bar means a smaller drop in average accuracy.</p>
+  <div class="plot-panel-heading"><h4>General benchmark average</h4><span class="plot-scale-label">Percentage-point change</span></div>
+  <ol class="plot-bars" role="list" aria-label="Change in general benchmark average accuracy, in percentage points relative to the original student">
+<li class="plot-row method-student is-zero" data-value="0.0"><span class="plot-method">Original student</span><span class="plot-value">0.0 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 0%"></span></span></li>
+<li class="plot-row method-offline" data-value="-3.4"><span class="plot-method">Offline full SFT</span><span class="plot-value">−3.4 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 85%"></span></span></li>
+<li class="plot-row method-oec" data-value="-1.3"><span class="plot-method">Fixed student prefix (OEC)</span><span class="plot-value">−1.3 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 32.5%"></span></span></li>
+<li class="plot-row method-olive" data-value="-0.9"><span class="plot-method">OLIVE</span><span class="plot-value">−0.9 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-size: 22.5%"></span></span></li>
+</ol><div class="plot-axis" aria-hidden="true"><span>−4</span><span>−3</span><span>−2</span><span>−1</span><span>0</span></div><p class="plot-axis-title">Change in accuracy (percentage points)</p>
+<figcaption><p>Average accuracy change on AIME25, LiveCodeBench v6, IFEval, and GPQA Diamond, relative to the original student. Zero means no change; negative values indicate a drop.</p><p>OLIVE’s average drop is <strong>0.9 percentage points</strong>, compared with 3.4 for offline full SFT and 1.3 for fixed student prefixes.</p></figcaption></figure>
+</div>
+
+        <p>OLIVE achieves the highest task performance on both metrics. Collecting teacher continuations from a fixed student already helps. Refreshing those prefixes online adds a further gain, connecting the teacher’s demonstrations to the student that is learning from them.</p>
+        <p>The improvement also comes with better preservation of general capabilities. We evaluated math on AIME25, code on LiveCodeBench v6, instruction following on IFEval, and science on GPQA Diamond. The average accuracy drop across these benchmarks was 0.9 points for OLIVE, compared with 3.4 points for offline full SFT. Online intervention improved the target task while preserving more performance outside it.</p>
+        <p class="note">This analysis uses complete, verifier-filtered continuations. The main reasoning comparison above uses short, unfiltered continuations. The plots use the paper’s pass@k and avg@k metric labels.</p>
+
+        <h3 id="continued-learning">A text-only teacher keeps the student learning.</h3>
+        <p>OLIVE turns generated teacher text into a continuing source of supervision. On ScienceWorld, we trained Qwen3-1.7B with GPT-5.4-mini as the teacher. Offline SFT reused a fixed set of teacher episodes. OLIVE collected new teacher continuations from the student’s latest interaction histories.</p>
+        <figure class="result-figure analysis-figure learning-figure" data-result-plot="learning" aria-labelledby="learning-title">
+  <div class="result-header">
+    <div><p class="result-eyebrow">ScienceWorld · Text-only teacher</p><h4 class="result-title" id="learning-title">Fresh interventions sustain learning</h4><p class="result-subtitle">Student: Qwen3-1.7B · Teacher: GPT-5.4-mini</p></div>
+    <div class="result-controls" role="group" aria-label="ScienceWorld analysis">
+      <button type="button" data-result-select="epochs" aria-pressed="true" aria-controls="learning-epochs">Training epochs</button>
+      <button type="button" data-result-select="rollouts" aria-pressed="false" aria-controls="learning-rollouts">Rollouts per prompt</button>
+    </div>
+  </div>
+<div class="result-plot-panel learning-panel" data-result-panel="epochs" id="learning-epochs" role="group" aria-label="Learning across five epochs" data-announcement="Showing learning across five epochs.">
+      <div class="plot-panel-heading"><h4>Learning across five epochs</h4><span class="plot-scale-label">Success rate (%)</span></div>
+      <p class="plot-annotation">Both methods train for the number of epochs shown.</p>
+      <div class="curve-legend" aria-label="Series legend"><span class="curve-olive">OLIVE</span><span class="curve-offline">Offline SFT</span></div>
+      <div class="curve-chart" role="img" aria-label="ScienceWorld success rate by training epoch. Values are listed below.">
+        <div class="curve-canvas" aria-hidden="true">
+<div class="curve-grid" style="bottom:0.000000%"><span>0</span></div>
+<div class="curve-grid" style="bottom:33.333333%"><span>10</span></div>
+<div class="curve-grid" style="bottom:66.666667%"><span>20</span></div>
+<div class="curve-grid" style="bottom:100.000000%"><span>30</span></div>
+<svg class="curve-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+<polyline class="curve-line curve-offline" points="50.000000,695.833367 275.000000,558.333333 500.000000,570.833333 725.000000,495.833333 950.000000,579.166667"/>
+<polyline class="curve-line curve-olive" points="50.000000,704.166633 275.000000,741.666600 500.000000,416.666700 725.000000,324.999967 950.000000,141.666667"/>
+</svg>
+<span class="curve-error curve-offline" data-series="Offline" data-x="1" data-low="7.068507" data-high="11.181494" style="left:5.000000%;bottom:23.561690%;height:13.709957%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="1" data-value="9.124999" style="left:5.000000%;bottom:30.416663%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="2" data-low="10.291961" data-high="16.208042" style="left:27.500000%;bottom:34.306537%;height:19.720270%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="2" data-value="13.25" style="left:27.500000%;bottom:44.166667%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="3" data-low="11.438861" data-high="14.311142" style="left:50.000000%;bottom:38.129537%;height:9.574270%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="3" data-value="12.875" style="left:50.000000%;bottom:42.916667%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="4" data-low="12.405474" data-high="17.844529" style="left:72.500000%;bottom:41.351580%;height:18.130183%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="4" data-value="15.125" style="left:72.500000%;bottom:50.416667%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="5" data-low="10.972981" data-high="14.277021" style="left:95.000000%;bottom:36.576603%;height:11.013467%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="5" data-value="12.625" style="left:95.000000%;bottom:42.083333%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="1" data-low="6.818507" data-high="10.931495" style="left:5.000000%;bottom:22.728357%;height:13.709960%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="1" data-value="8.875001" style="left:5.000000%;bottom:29.583337%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="2" data-low="5.532646" data-high="9.967357" style="left:27.500000%;bottom:18.442153%;height:14.782370%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="2" data-value="7.750002" style="left:27.500000%;bottom:25.833340%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="3" data-low="14.854248" data-high="20.145751" style="left:50.000000%;bottom:49.514160%;height:17.638343%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="3" data-value="17.499999" style="left:50.000000%;bottom:58.333330%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="4" data-low="17.651923" data-high="22.848076" style="left:72.500000%;bottom:58.839743%;height:17.320510%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="4" data-value="20.250001" style="left:72.500000%;bottom:67.500003%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="5" data-low="24.25" data-high="27.250001" style="left:95.000000%;bottom:80.833333%;height:10.000003%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="5" data-value="25.75" style="left:95.000000%;bottom:85.833333%"></span>
+</div><div class="curve-x-ticks" aria-hidden="true">
+<span style="left:5.000000%">1</span>
+<span style="left:27.500000%">2</span>
+<span style="left:50.000000%">3</span>
+<span style="left:72.500000%">4</span>
+<span style="left:95.000000%">5</span>
+</div><p class="plot-axis-title">Training epoch</p></div>
+<div class="curve-inspect" role="group" aria-label="Inspect epochs values"><span class="curve-inspect-label">Epoch</span>
+<button type="button" data-curve-x="1" data-offline="9.1" data-olive="8.9" aria-pressed="false" aria-controls="curve-readout-epochs" aria-label="Show values for epoch 1">1</button>
+<button type="button" data-curve-x="2" data-offline="13.2" data-olive="7.8" aria-pressed="false" aria-controls="curve-readout-epochs" aria-label="Show values for epoch 2">2</button>
+<button type="button" data-curve-x="3" data-offline="12.9" data-olive="17.5" aria-pressed="false" aria-controls="curve-readout-epochs" aria-label="Show values for epoch 3">3</button>
+<button type="button" data-curve-x="4" data-offline="15.1" data-olive="20.3" aria-pressed="false" aria-controls="curve-readout-epochs" aria-label="Show values for epoch 4">4</button>
+<button type="button" data-curve-x="5" data-offline="12.6" data-olive="25.8" aria-pressed="true" aria-controls="curve-readout-epochs" aria-label="Show values for epoch 5">5</button>
+</div><div class="curve-readout" id="curve-readout-epochs" aria-live="polite" aria-atomic="true"><span class="curve-readout-olive">OLIVE <strong>≈25.8%</strong></span><span>Offline SFT <strong>≈12.6%</strong></span></div>
+<details class="curve-values"><summary>All approximate values</summary><ul>
+<li>Epoch 1: OLIVE ≈8.9%; Offline SFT ≈9.1%.</li>
+<li>Epoch 2: OLIVE ≈7.8%; Offline SFT ≈13.2%.</li>
+<li>Epoch 3: OLIVE ≈17.5%; Offline SFT ≈12.9%.</li>
+<li>Epoch 4: OLIVE ≈20.3%; Offline SFT ≈15.1%.</li>
+<li>Epoch 5: OLIVE ≈25.8%; Offline SFT ≈12.6%.</li>
+</ul></details></div>
+<div class="result-plot-panel learning-panel" data-result-panel="rollouts" id="learning-rollouts" role="group" aria-label="More student attempts within one epoch" data-announcement="Showing more student attempts within one epoch.">
+      <div class="plot-panel-heading"><h4>More student attempts within one epoch</h4><span class="plot-scale-label">Success rate (%)</span></div>
+      <p class="plot-annotation"><strong>OLIVE:</strong> rollouts per prompt in one epoch. <strong>Offline SFT:</strong> epochs on fixed data.</p>
+      <div class="curve-legend" aria-label="Series legend"><span class="curve-olive">OLIVE</span><span class="curve-offline">Offline SFT</span></div>
+      <div class="curve-chart" role="img" aria-label="ScienceWorld success rate by online rollouts per prompt and offline epochs. Values are listed below.">
+        <div class="curve-canvas" aria-hidden="true">
+<div class="curve-grid" style="bottom:0.000000%"><span>0</span></div>
+<div class="curve-grid" style="bottom:33.333333%"><span>10</span></div>
+<div class="curve-grid" style="bottom:66.666667%"><span>20</span></div>
+<div class="curve-grid" style="bottom:100.000000%"><span>30</span></div>
+<svg class="curve-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+<polyline class="curve-line curve-offline" points="50.000000,695.999967 350.000000,558.333300 950.000000,495.999967"/>
+<polyline class="curve-line curve-olive" points="50.000000,703.999933 350.000000,529.333300 950.000000,333.333333"/>
+</svg>
+<span class="curve-error curve-offline" data-series="Offline" data-x="1" data-low="7.34" data-high="10.900002" style="left:5.000000%;bottom:24.466667%;height:11.866673%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="1" data-value="9.120001" style="left:5.000000%;bottom:30.400003%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="2" data-low="10.690002" data-high="15.81" style="left:35.000000%;bottom:35.633340%;height:17.066660%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="2" data-value="13.250001" style="left:35.000000%;bottom:44.166670%"></span>
+<span class="curve-error curve-offline" data-series="Offline" data-x="4" data-low="12.760002" data-high="17.480001" style="left:95.000000%;bottom:42.533340%;height:15.733330%"></span>
+<span class="curve-dot curve-offline" data-series="Offline" data-x="4" data-value="15.120001" style="left:95.000000%;bottom:50.400003%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="1" data-low="7.100001" data-high="10.660001" style="left:5.000000%;bottom:23.666670%;height:11.866667%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="1" data-value="8.880002" style="left:5.000000%;bottom:29.600007%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="2" data-low="12.56" data-high="15.680001" style="left:35.000000%;bottom:41.866667%;height:10.400003%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="2" data-value="14.120001" style="left:35.000000%;bottom:47.066670%"></span>
+<span class="curve-error curve-olive" data-series="OLIVE" data-x="4" data-low="19.500001" data-high="20.500002" style="left:95.000000%;bottom:65.000003%;height:3.333337%"></span>
+<span class="curve-dot curve-olive" data-series="OLIVE" data-x="4" data-value="20.0" style="left:95.000000%;bottom:66.666667%"></span>
+</div><div class="curve-x-ticks" aria-hidden="true">
+<span style="left:5.000000%">1</span>
+<span style="left:35.000000%">2</span>
+<span style="left:95.000000%">4</span>
+</div><p class="plot-axis-title">Online rollouts per prompt / offline epochs</p></div>
+<div class="curve-inspect" role="group" aria-label="Inspect rollouts values"><span class="curve-inspect-label">Rollouts / epochs</span>
+<button type="button" data-curve-x="1" data-offline="9.1" data-olive="8.9" aria-pressed="false" aria-controls="curve-readout-rollouts" aria-label="Show values for setting 1">1</button>
+<button type="button" data-curve-x="2" data-offline="13.3" data-olive="14.1" aria-pressed="false" aria-controls="curve-readout-rollouts" aria-label="Show values for setting 2">2</button>
+<button type="button" data-curve-x="4" data-offline="15.1" data-olive="20.0" aria-pressed="true" aria-controls="curve-readout-rollouts" aria-label="Show values for setting 4">4</button>
+</div><div class="curve-readout" id="curve-readout-rollouts" aria-live="polite" aria-atomic="true"><span class="curve-readout-olive">OLIVE <strong>≈20.0%</strong></span><span>Offline SFT <strong>≈15.1%</strong></span></div>
+<details class="curve-values"><summary>All approximate values</summary><ul>
+<li>Setting 1: OLIVE ≈8.9%; Offline SFT ≈9.1%.</li>
+<li>Setting 2: OLIVE ≈14.1%; Offline SFT ≈13.3%.</li>
+<li>Setting 4: OLIVE ≈20.0%; Offline SFT ≈15.1%.</li>
+</ul></details></div>
+<p class="plot-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <figcaption>Curves and error bars are reconstructed from the paper’s plotted coordinates; readouts are approximate. The paper does not specify the error-bar statistic. Both views use the same 0–30% scale.</figcaption>
+</figure>
+        <p>Offline SFT is ahead during the first two epochs, then its progress levels off. OLIVE keeps improving through the later epochs and finishes well ahead. Refreshing the context changes what the teacher demonstrates as training proceeds, keeping the supervision useful to the evolving student.</p>
+        <p>More online attempts also help within a single epoch. In the rollout comparison, OLIVE samples multiple prefixes per prompt during one epoch, while the offline baseline revisits its fixed data for more epochs. OLIVE is ahead at the settings with two and four rollouts per prompt. Fresh attempts give the teacher additional student-generated contexts to continue.</p>
+
+        <h3 id="continual-learning">Keep learning as tasks change.</h3>
+        <p>We also tested whether online intervention helps a student continue learning across different environments. Starting from Qwen3-4B, we trained for five epochs on each environment in sequence and then evaluated the resulting policy on all five tasks.</p>
+        <figure class="result-figure analysis-figure plasticity-plot" aria-labelledby="plasticity-plot-title">
+  <div class="result-header"><div><p class="result-eyebrow">Sequential training · Qwen3-4B</p><h3 class="result-title" id="plasticity-plot-title">Stronger learning across successive tasks</h3><p class="result-subtitle">Success-rate difference: OLIVE minus offline distillation.</p></div></div>
+  <p class="analysis-training-order"><strong>Training order:</strong> BabyAI → TextCraft → SearchQA → ALFWorld → ScienceWorld. Five epochs on each environment.</p>
+  <div class="plot-panel-heading"><h4>Gain after sequential training</h4><span class="plot-scale-label">Percentage points · positive favors OLIVE</span></div>
+  <ol class="plot-bars" role="list" aria-label="OLIVE minus offline distillation success rate, in percentage points, shown in training order">
+<li class="plot-row is-zero" data-value="0.0"><span class="plot-method">BabyAI</span><span class="plot-value">0.0 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 25%; --bar-size: 0%"></span></span></li>
+<li class="plot-row" data-value="8.5"><span class="plot-method">TextCraft</span><span class="plot-value">+8.5 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 25%; --bar-size: 42.5%"></span></span></li>
+<li class="plot-row is-negative" data-value="-0.6"><span class="plot-method">SearchQA</span><span class="plot-value">−0.6 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 22%; --bar-size: 3%"></span></span></li>
+<li class="plot-row" data-value="4.8"><span class="plot-method">ALFWorld</span><span class="plot-value">+4.8 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 25%; --bar-size: 24%"></span></span></li>
+<li class="plot-row" data-value="13.0"><span class="plot-method">ScienceWorld</span><span class="plot-value">+13.0 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 25%; --bar-size: 65%"></span></span></li>
+</ol><ol class="plot-bars plot-average" role="list" aria-label="Mean success-rate difference across the five environments"><li class="plot-row" data-value="5.1"><span class="plot-method">Average</span><span class="plot-value">+5.1 pp</span><span class="plot-track" aria-hidden="true"><span class="plot-bar" style="--bar-start: 25%; --bar-size: 25.5%"></span></span></li></ol>
+<div class="plot-axis" aria-hidden="true"><span>−5</span><span>0</span><span>+5</span><span>+10</span><span>+15</span></div><p class="plot-axis-title">OLIVE − offline distillation (percentage points)</p>
+<figcaption><p>Success rates evaluated after sequential training on all five environments. The rows follow training order; the separated final row gives the average difference.</p><p>OLIVE gains <strong>5.1 percentage points on average</strong>. The largest gain is on ScienceWorld, the last environment. BabyAI is tied; SearchQA is 0.6 points lower.</p></figcaption>
+</figure>
+
+        <p>OLIVE finishes ahead on average, with the largest gain on ScienceWorld, the final environment in the sequence. It matches offline distillation on BabyAI and is slightly behind on SearchQA. As earlier training changes the student’s behavior, fresh interventions keep providing demonstrations for the states it now reaches. These results support online supervision as a useful way to sustain learning across tasks.</p>
       </section>
 
       <section id="next">
