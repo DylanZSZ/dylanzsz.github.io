@@ -45,9 +45,9 @@
 .plot-row.method-tcod-f2b .plot-bar { background: #a9bca7; }
 .plot-row.method-guided .plot-bar { background: #91ad96; }
 .plot-row.method-teacher .plot-bar { background: repeating-linear-gradient(135deg, rgba(92, 116, 93, .1), rgba(92, 116, 93, .1) 3px, transparent 3px, transparent 6px); border: 1px dashed #8d9f88; }
-.plot-row.method-oliver .plot-bar { background: var(--green); }
-.plot-row.method-oliver .plot-method, .plot-row.method-oliver .plot-value { color: var(--green-deep); font-weight: 750; }
-.plot-row.method-oliver .plot-method::before { content: ""; align-self: center; width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex: 0 0 5px; }
+.plot-row.method-olive .plot-bar { background: var(--green); }
+.plot-row.method-olive .plot-method, .plot-row.method-olive .plot-value { color: var(--green-deep); font-weight: 750; }
+.plot-row.method-olive .plot-method::before { content: ""; align-self: center; width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex: 0 0 5px; }
 .plot-axis { display: flex; justify-content: space-between; margin-top: 10px; color: #626e61; font: 12px/1.4 var(--sans); font-variant-numeric: tabular-nums; }
 .plot-axis span:first-child { text-align: left; }
 .plot-axis span:last-child { text-align: right; }

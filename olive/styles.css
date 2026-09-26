@@ -1,4 +1,4 @@
-/* OLIVER — a research notebook about Online Intervention. */
+/* OLIVE — a research notebook about Online Intervention. */
 :root {
   color-scheme: light;
   --paper: #faf8f2;
@@ -172,7 +172,7 @@ thead th { color: var(--muted); font-size: 11px; font-weight: 600; background: #
 th:first-child, td:first-child { text-align: left; }
 tbody th { font-weight: 500; }
 td { white-space: nowrap; }
-tr.oliver-row th, tr.oliver-row td { background: var(--green-pale); color: var(--green-deep); font-weight: 650; }
+tr.olive-row th, tr.olive-row td { background: var(--green-pale); color: var(--green-deep); font-weight: 650; }
 details { margin: 28px 0; padding: 19px 22px; border: 1px solid var(--rule); border-radius: 3px; }
 summary { cursor: pointer; color: var(--green-deep); font: 600 14px/1.6 var(--sans); }
 details[open] > summary { margin-bottom: 18px; }
