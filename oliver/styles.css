@@ -104,6 +104,9 @@ h1 { max-width: 1000px; margin-bottom: 25px; color: var(--green-deep); font-size
 .project-credit p { margin-bottom: 4px; }
 .project-credit strong { color: var(--ink); }
 .project-credit p:last-child { margin-bottom: 0; }
+.contributor-list { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 26px; margin: 10px 0 16px; color: var(--ink); font: 500 15px/1.7 var(--sans); }
+.contributor-list .project-lead { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--green-deep); font-weight: 700; }
+.lead-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; color: white; background: var(--green-deep); font: 600 12px/1.6 var(--sans); }
 
 /* Main text: fixed readable measure, with a margin for the contents. */
 .article-grid { display: grid; grid-template-columns: 170px minmax(0, 800px); justify-content: space-between; gap: 50px; padding-top: 72px; padding-bottom: 96px; }
