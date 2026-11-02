@@ -252,6 +252,10 @@ h1, h2, h3, h4 { font-family: var(--serif); font-weight: 700; letter-spacing: -.
 .xp-meta { text-align: right; flex: 0 0 auto; }
 .xp-when { font-family: var(--mono); font-size: 12.5px; color: var(--ink-quiet); }
 .xp-where { font-size: 12.5px; color: var(--ink-quiet); margin-top: 3px; }
+.research-history-heading { margin-top: 44px; scroll-margin-top: 90px; font-family: var(--sans); }
+.research-history { margin: 0; padding-left: 1.25em; color: var(--ink-soft); font-size: 15px; }
+.research-history li + li { margin-top: 16px; }
+.research-history strong { color: var(--ink); }
 @media (max-width: 640px) {
   .xp-row { flex-direction: column; align-items: flex-start; gap: 12px; }
   .xp-meta { text-align: left; }
